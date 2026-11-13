@@ -1,15 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 
 import { runtime } from '../game/runtime'
 import { GRADIENTS } from './hud/style'
+import { useTouch } from './useTouch'
 
 /** Joystick travel radius, in CSS pixels. */
 const RADIUS = 56
-
-function detectTouch() {
-  if (typeof window === 'undefined') return false
-  return window.matchMedia?.('(pointer: coarse)').matches || navigator.maxTouchPoints > 0
-}
 
 /** The chunky round look of the HUD's buttons, sized in CSS pixels. */
 const roundButton = (size, background) => ({
@@ -28,20 +24,10 @@ const roundButton = (size, background) => ({
  * never re-renders React.
  */
 export function TouchControls() {
-  const [isTouch, setIsTouch] = useState(detectTouch)
+  const isTouch = useTouch()
   const baseRef = useRef(null)
   const knobRef = useRef(null)
   const active = useRef({ id: null, x: 0, y: 0 })
-
-  // A touchscreen laptop can start with a mouse; show the controls on first touch.
-  useEffect(() => {
-    if (isTouch) return undefined
-    const onTouch = (e) => {
-      if (e.pointerType === 'touch') setIsTouch(true)
-    }
-    window.addEventListener('pointerdown', onTouch)
-    return () => window.removeEventListener('pointerdown', onTouch)
-  }, [isTouch])
 
   useEffect(
     () => () => {

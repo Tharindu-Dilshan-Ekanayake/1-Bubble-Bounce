@@ -118,8 +118,8 @@ function StreakCard({ profile, now }) {
         <span style={{ fontSize: u(28) }}>
           <StrokeText stroke={u(6)} style={{ whiteSpace: 'normal' }}>
             {maxed
-              ? `MAX STREAK: x${mult.toFixed(1)} Wins on every launch! Keep it going every day.`
-              : `x${mult.toFixed(1)} Wins on every launch - come back tomorrow for x${next.toFixed(1)}! Miss a day and it starts again.`}
+              ? `MAX STREAK: x${mult.toFixed(1)} Wins on every bounce! Keep it going every day.`
+              : `x${mult.toFixed(1)} Wins on every bounce - come back tomorrow for x${next.toFixed(1)}! Miss a day and it starts again.`}
           </StrokeText>
         </span>
       </div>

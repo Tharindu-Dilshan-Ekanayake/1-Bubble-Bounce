@@ -1,14 +1,15 @@
-import { comboBonus, crowdBonus, dayNumber, levelCap, EGGS, hitGrade, ITEMS, MULTI_HATCH, PADS, ROLL_TICK, SHOP, TIRES, TRAIN_INTERVAL, WALK_STEP, ZONES } from './balance.js'
+import { BLOW_TAP_BURST, BLOW_TAP_RATE, BOUNCE_TAP_EARLY_MS, BOUNCE_TAP_LATE_MS, bounceTimes, comboBonus, MAX_PERFECT_BOUNCES, crowdBonus, dayNumber, EGGS, hitGrade, ITEMS, MULTI_HATCH, PADS, ROLL_TICK, SHOP, TIRES, TRAIN_INTERVAL, ZONES } from './balance.js'
 import { applyStreak, claimQuest, claimQuestBonus, ensureQuests, progressQuests, questText, rollLuckyGift } from './engage.js'
 import {
+  applyTrain,
   advanceTutorial,
   applyAdReward,
   applyGemProduct,
   applyRebirth,
   applyRoll,
   applyRollTick,
-  applyTrain,
-  applyWalkStep,
+  applyBlowTap,
+  applyBounceTap,
   awardBadge,
   buyHealthPack,
   buyShopItem,
@@ -30,7 +31,7 @@ import {
   usePortal,
   usePotion,
 } from './logic.js'
-import { eggStandNear, FREE_REWARD, inRect, inRollZone, MAX_MOVE_SPEED, MAX_PULL, maxPullFor, pullBackAt, onPad, portalAt, STAR, standRect, TIRE_STANDS } from './world.js'
+import { eggStandNear, FREE_REWARD, inRect, inRollZone, onPad, padAt, portalAt, STAR, standRect, TIRE_STANDS } from './world.js'
 
 const TIRE_INDEX = Object.fromEntries(TIRES.map((t, i) => [t.id, i]))
 /** Reaching Outer Space earns its badge; the last stage has its own. */
@@ -40,6 +41,9 @@ const SPACE_ZONE = ZONES.findIndex((z) => z.id === 'space')
 const QUEST_SYNC = 5
 /** How far off a pad still counts as "on" it (network jitter). */
 const PAD_SLACK = 0.8
+/** Standing still: within STILL_RADIUS metres of where you settled for STILL_MS. */
+const STILL_RADIUS = 0.3
+const STILL_MS = 400
 /** Same for the roll zone. */
 const ROLL_SLACK = 1.5
 /** Tires are bought by standing at their stand; allow for a little lag. */
@@ -56,8 +60,12 @@ const STAND_SLACK = 2
  * Events emitted (type, payload):
  * - 'profile'  { profile, session }  full state, after anything structural
  * - 'train'    { source, pad, gain, health, level, leveledUp, levels, maxed }  each
- *                Health gain; `source` is 'pad' (pad is its index), 'roll' (while your
- *                tire rolls) or 'walk' (walking round the lobby), pad -1 for both
+ *                Breath gain; `source` is 'pad' (pad is its index), 'blow' (a tap of
+ *                BLOW; pad is the Blow Pad it was on, or -1), 'roll' (while you bounce)
+ *                or 'bounce' (a PERFECT or GOOD BOUNCE tap), pad -1 for both. Walking
+ *                round the lobby earns nothing.
+ * - 'bounceBoost' { k, grade, add, distance, wins, prize, discovered, perfects }  a
+ *                PERFECT or GOOD BOUNCE counted: `add` metres further, `distance` now
  * - 'roll'     { distance, wins, prize, discovered, blocked, broken, duration,
  *                multiplier, best, tireId }  a roll to replay
  * - 'pack'     { amount }  a Health pack landed
@@ -72,7 +80,7 @@ const STAND_SLACK = 2
  * server paying the friends bonus) and `gift` (a lucky gift it landed, or null). The
  * session state sent with every profile carries `streak`: today's login streak news.
  *
- * `onRoll(result)` lets the host tell other players about a roll (ghost tires).
+ * `onRoll(result)` lets the host tell other players about a bounce (ghost bubbles).
  */
 export class PlayerSession {
   /**
@@ -80,18 +88,20 @@ export class PlayerSession {
    * @param {{ now: number, emit: (type: string, payload?: object) => void,
    *           getPosition: () => {x: number, y: number, z: number},
    *           onPurchase?: (productId: string) => boolean,
-   *           onRoll?: (result: object) => void, getOthers?: () => number,
+   *           onRoll?: (result: object) => void, onBounceBoost?: (boost: object) => void,
+   *           getOthers?: () => number,
    *           rand?: () => number }} options
    *   `onPurchase` lets the host veto or count a shop sale (stock limits). `getOthers`
    *   says how many other players share your server and world (the friends bonus).
    */
-  constructor(profile, { now, emit, getPosition, onPurchase, onRoll, getOthers, rand = Math.random }) {
+  constructor(profile, { now, emit, getPosition, onPurchase, onRoll, onBounceBoost, getOthers, rand = Math.random }) {
     this.profile = profile
     this.session = createSession(now)
     this.emit = emit
     this.getPosition = getPosition
     this.onPurchase = onPurchase
     this.onRoll = onRoll
+    this.onBounceBoost = onBounceBoost
     this.getOthers = getOthers
     this.rand = rand
 
@@ -109,16 +119,18 @@ export class PlayerSession {
 
     /** Pad the client says it's on; verified against position every tick. */
     this.pad = -1
-    this.trainTimer = 0
     /** Server time until which the player's tire is out (and its result) and can't roll again. */
     this.busyUntil = 0
     /** Server time the current roll stops; Health ticks in until then. */
     this.rollingUntil = 0
     this.rollTimer = 0
-    /** Metres walked towards the next walking gain, and where the player last was. */
-    this.walked = 0
-    this.lastX = null
-    this.lastZ = 0
+    /** Seconds towards the next step of training on a pad. */
+    this.trainTimer = 0
+    /** Where the player was last seen to settle, and since when (server ms): standing still. */
+    this.stillAt = { x: 0, z: 0, since: now }
+    /** BLOW taps in hand (a token bucket: BLOW_TAP_RATE a second, BLOW_TAP_BURST at most) and when it was last topped up. */
+    this.blowTokens = BLOW_TAP_BURST
+    this.blowAt = now
     this.dirty = false
   }
 
@@ -199,8 +211,71 @@ export class PlayerSession {
     },
 
     /**
-     * Kicks your ball: only from the KICK ZONE, and not while one is still out.
-     * `accuracy` (0-1) is where the timing meter stopped; absent for Auto Kick.
+     * A tap of BLOW: one more Breath gain - a Blow Pad's if you're standing on an unlocked
+     * one, your bubble's own anywhere else. Never while you're bouncing, and at most
+     * BLOW_TAP_RATE a second (taps over that are dropped, not queued).
+     */
+    blow(_payload, now) {
+      if (now < this.busyUntil) return
+      this.blowTokens = Math.min(BLOW_TAP_BURST, this.blowTokens + ((now - this.blowAt) / 1000) * BLOW_TAP_RATE)
+      this.blowAt = now
+      if (this.blowTokens < 1) return
+      this.blowTokens -= 1
+      const p = this.getPosition()
+      const pad = padAt(p.x, p.z, PAD_SLACK)
+      const onUnlocked = pad >= 0 && isPadUnlocked(this.profile, pad)
+      this.gain('blow', onUnlocked ? pad : -1, applyBlowTap(this.profile, onUnlocked ? pad : -1, now))
+      this.quest('rep', 1, now)
+      this.tutorial('train')
+    },
+
+    /**
+     * A tap of the bubble's touch-down `k` (0 the first), judged by the client as
+     * 'perfect' or 'good' (balance PERFECT_BOUNCE_WINDOW). Counted only during your
+     * bounce, once per touch-down, only if it arrives about when that touch-down happened
+     * (BOUNCE_TAP_EARLY_MS before to BOUNCE_TAP_LATE_MS after, for network lag), and at
+     * most MAX_PERFECT_BOUNCES PERFECTs a bounce (more count as GOOD).
+     */
+    bounceTap({ k, grade }, now) {
+      const b = this.bounce
+      if (!b || now >= this.rollingUntil) return
+      const index = Number(k)
+      const { touchdowns } = bounceTimes(b.distance, b.duration)
+      if (!Number.isInteger(index) || index < 0 || index >= touchdowns.length || b.claimed.has(index)) return
+      const at = b.start + touchdowns[index] * 1000
+      if (now < at - BOUNCE_TAP_EARLY_MS || now > at + BOUNCE_TAP_LATE_MS) return
+      if (grade !== 'perfect' && grade !== 'good') return
+      b.claimed.add(index)
+      const judged = grade === 'perfect' && b.perfects < MAX_PERFECT_BOUNCES ? 'perfect' : 'good'
+      const result = applyBounceTap(this.profile, b, judged, now)
+      if (judged === 'perfect') {
+        b.perfects += 1
+        b.extra += result.add
+      }
+      this.gain('bounce', -1, result.breath)
+      this.emit('bounceBoost', {
+        k: index,
+        grade: judged,
+        add: result.add,
+        distance: result.distance,
+        wins: result.wins,
+        prize: result.prize,
+        discovered: result.discovered,
+        best: result.best,
+        perfects: b.perfects,
+      })
+      if (judged === 'perfect') {
+        this.onBounceBoost?.({ k: index, add: result.add, at: touchdowns[index] })
+        this.quest('perfectBounce', 1, now)
+        this.quest('meters', result.add, now)
+        this.quest('far', result.distance, now)
+      }
+      this.dirty = true
+    },
+
+    /**
+     * Bounces you: only from the BLOW ZONE, and not while a bounce is still under way.
+     * `accuracy` (0-1) is where the blow meter stopped; absent for Auto Bounce.
      */
     roll(payload, now) {
       if (now < this.busyUntil) return
@@ -213,12 +288,12 @@ export class PlayerSession {
       this.session.combo = grade?.id === 'perfect' ? (this.session.combo || 0) + 1 : 0
       const combo = this.session.combo
       const others = Math.max(0, Math.floor(this.getOthers?.() || 0))
-      // How far back down the stretch lane you were (no further than your arms reach).
-      const reach = maxPullFor(this.profile.equippedTire, this.profile.level, levelCap(this.profile.rebirths))
-      const pulled = Math.min(reach + 0.5, pullBackAt(p.x, p.z))
-      const result = applyRoll(this.profile, now, accuracy, comboBonus(combo) * crowdBonus(others), pulled / MAX_PULL)
+      const result = applyRoll(this.profile, now, accuracy, comboBonus(combo) * crowdBonus(others))
       const gift = rollLuckyGift(this.profile, this.rand)
       this.busyUntil = now + result.cooldown * 1000
+      // The bounce under way, for its PERFECT BOUNCE taps: when it went (server time), as
+      // launched, what it paid, which touch-downs are taken, the PERFECTs and metres added.
+      this.bounce = { start: now, distance: result.distance, duration: result.duration, baseWins: result.wins, claimed: new Set(), perfects: 0, extra: 0 }
       this.rollingUntil = now + result.duration * 1000
       this.rollTimer = 0
       this.pad = -1
@@ -237,7 +312,6 @@ export class PlayerSession {
         combo,
         others,
         gift,
-        stretch: Math.round(pulled * 10) / 10,
       })
       this.onRoll?.(result)
       this.quest('launch', 1, now)
@@ -246,7 +320,7 @@ export class PlayerSession {
       this.quest('combo', combo, now)
       this.quest('meters', result.distance, now)
       this.quest('far', result.distance, now)
-      // The HUD holds the new Wins back until the tire stops; the profile can go now.
+      // The HUD holds the new Wins back until the bubble pops; the profile can go now.
       this.dirty = true
       this.tutorial('roll')
       this.badge('firstRoll')
@@ -326,7 +400,7 @@ export class PlayerSession {
       this.afterReward(result)
     },
 
-    /** Picks up Palm Beach's Secret Star: only standing at it, in Palm Beach, once. */
+    /** Picks up Coral Coast's Secret Star: only standing at it, in Coral Coast, once. */
     findStar() {
       const p = this.getPosition()
       if (Math.hypot(p.x - STAR.x, p.z - STAR.z) > STAR.radius + 1) return
@@ -433,12 +507,24 @@ export class PlayerSession {
 
   // --- Simulation ------------------------------------------------------------------
 
-  /** Whether the player stands at (or right by) the stand for tire `id`. */
+  /** Whether the player stands at (or right by) the stand for bubble `id`. */
   nearStandFor(id) {
     const stand = TIRE_STANDS[TIRE_INDEX[id]]
     if (!stand) return false
     const p = this.getPosition()
     return inRect(standRect(stand), p.x, p.z, STAND_SLACK)
+  }
+
+  /** Whether the player stays (within STILL_RADIUS) where they were for STILL_MS: not walking. */
+  isStill(now) {
+    const p = this.getPosition()
+    const a = this.stillAt
+    if (Math.hypot(p.x - a.x, p.z - a.z) > STILL_RADIUS) {
+      a.x = p.x
+      a.z = p.z
+      a.since = now
+    }
+    return now - a.since >= STILL_MS
   }
 
   /** Whether the player is really standing on the pad they claim. */
@@ -449,49 +535,27 @@ export class PlayerSession {
   }
 
   /**
-   * Metres walked on the ground since the last tick. A jump further than a few ticks of
-   * walking could cover (a teleport, a respawn, the hop back after a roll) earns nothing;
-   * the margin allows for position reports arriving in bursts.
+   * Advances training and bouncing. Standing still on an unlocked Blow Pad trains a step
+   * every TRAIN_INTERVAL; walking round the lobby (or across a pad) earns nothing, and
+   * tapping BLOW pays on top. Call at a steady rate (the room's simulation interval).
    */
-  stepWalked(dt) {
-    const p = this.getPosition()
-    if (this.lastX === null) {
-      this.lastX = p.x
-      this.lastZ = p.z
-      return 0
-    }
-    const d = Math.hypot(p.x - this.lastX, p.z - this.lastZ)
-    this.lastX = p.x
-    this.lastZ = p.z
-    return d > MAX_MOVE_SPEED * Math.max(dt, 0.1) * 3 ? 0 : d
-  }
-
-  /** Advances training, rolling and walking. Call at a steady rate (the room's simulation interval). */
   tick(dt, now) {
-    const walked = this.stepWalked(dt)
     if (now < this.rollingUntil) {
-      // Health trickles in all the way along the track.
+      // Breath trickles in all the way down the valley: the bubble gets stronger every bounce.
       this.rollTimer += dt
       while (this.rollTimer >= ROLL_TICK) {
         this.rollTimer -= ROLL_TICK
         this.gain('roll', -1, applyRollTick(this.profile, now))
       }
-    } else if (this.pad >= 0 && now >= this.busyUntil && this.onClaimedPad()) {
+    } else if (this.pad >= 0 && now >= this.busyUntil && this.onClaimedPad() && this.isStill(now)) {
       this.trainTimer += dt
       while (this.trainTimer >= TRAIN_INTERVAL) {
         this.trainTimer -= TRAIN_INTERVAL
         this.trainOnce(now)
       }
     } else {
+      this.isStill(now)
       this.trainTimer = Math.min(this.trainTimer, TRAIN_INTERVAL * 0.5)
-      // Walking round the lobby: a gain every WALK_STEP metres.
-      if (now >= this.busyUntil) {
-        this.walked += walked
-        while (this.walked >= WALK_STEP) {
-          this.walked -= WALK_STEP
-          this.gain('walk', -1, applyWalkStep(this.profile, now))
-        }
-      }
     }
     this.profile.stats.playtime += dt
     // A minute played towards today's quests; and past midnight, a new day: fresh
@@ -517,7 +581,7 @@ export class PlayerSession {
     if (this.dirty) this.sendProfile()
   }
 
-  /** Tells the client about a Health gain from `source` ('pad', 'roll' or 'walk'). */
+  /** Tells the client about a Breath gain from `source` ('pad', 'blow', 'roll' or 'bounce'). */
   gain(source, pad, result) {
     // At max level gains stop; there's nothing to show.
     if (result.gain > 0) {

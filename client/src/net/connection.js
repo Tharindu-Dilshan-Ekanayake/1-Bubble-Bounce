@@ -2,7 +2,6 @@ import { reportedAnim } from '../bloxity/emotes'
 import { environment } from '../bloxity/env'
 import { GAME_SLUG, joinToken } from '../bloxity/identity'
 import { getSDK, safeCall, waitForSDK } from '../bloxity/sdk'
-import { LAUNCH_STAND } from '@shared/world'
 
 import { meterAtZ } from '../game/roll/path'
 import { runtime } from '../game/runtime'
@@ -64,7 +63,7 @@ async function findDevServer() {
   for (const port of DEV_PORTS) candidates.push(`${window.location.protocol}//${window.location.hostname}:${port}`)
   for (const url of new Set(candidates)) {
     const health = await healthOf(url)
-    if (health?.ok && health.game === '1-arm-length') return url
+    if (health?.ok && health.game === '1-bubble-bounce') return url
   }
   return null
 }
@@ -229,19 +228,25 @@ function attachRoom(room, identity, Callbacks, endpoint, gen) {
         getGame().setLeaderboards(payload)
         break
       case 'ghostRoll':
-        // Never your own launch (you're flying already), and only launches down your
-        // world's runway. Their avatar replays it (remote/): from the launch posts, as far
-        // back as they'd walked.
+        // Never your own bounce (you're bouncing already), and only bounces down your
+        // world's valley. Their avatar and bubble replay it (remote/, BubbleRiders): from
+        // where they blew the bubble in the Blow Zone.
         if (payload.sid === room.sessionId) break
         if ((payload.world || 0) !== (getGame().profile.world || 0)) break
         runtime.ghostRolls.set(payload.sid, {
           ...payload,
-          fromMeter: meterAtZ(LAUNCH_STAND.z),
-          startX: LAUNCH_STAND.x,
-          pull: Math.max(0, payload.z - LAUNCH_STAND.z),
+          fromMeter: meterAtZ(Number(payload.z) || 0),
+          startX: Number(payload.x) || 0,
           startedAt: performance.now(),
+          boosts: [],
         })
         break
+      case 'ghostBoost': {
+        // Their PERFECT BOUNCE: their bubble surges on in your replay too.
+        const ghost = runtime.ghostRolls.get(payload.sid)
+        if (ghost && Number.isFinite(payload.at) && Number.isFinite(payload.add)) ghost.boosts.push({ at: payload.at, add: payload.add })
+        break
+      }
       case 'kicked':
         leaving = true
         replaced = true

@@ -264,16 +264,16 @@ function windStop() {
   liveCrowd()?.anticipate(false)
 }
 
-// --- The pull-up bar: a springy boing every rep ----------------------------------------
+// --- The Blow Pad: a breath and a bubbly blip every puff --------------------------------
 
-/** Seconds between reps on a bar: one a TRAIN_INTERVAL (kick.RUN_CADENCE is its phase speed). */
+/** Seconds between puffs on a pad: one a TRAIN_INTERVAL (kick.RUN_CADENCE is its phase speed). */
 const REP = (Math.PI * 2) / RUN_CADENCE
 let bar = null
 
 /**
- * Starts the reps' sound under you: each pull-up a rubbery "boi-oing" as your arms snap
- * short and a soft creak as they stretch back out (scheduled a little ahead on the audio
- * clock, like the music). Stopped by treadmillStop (the template's name) when you let go.
+ * Starts the puffs' sound under you: each one a soft breath of air through the wand and a
+ * couple of bubbly blips as the bubbles float off (scheduled a little ahead on the audio
+ * clock, like the music). Stopped by treadmillStop (the template's name) when you step off.
  */
 function treadmillStart() {
   if (!ctx || bar || silent() || ctx.state !== 'running') return
@@ -282,9 +282,9 @@ function treadmillStart() {
     next = Math.max(next, ctx.currentTime + 0.02)
     while (next < ctx.currentTime + 0.4) {
       const at = next - ctx.currentTime
-      tone(150, { type: 'triangle', at, duration: 0.2, volume: 0.06, slideTo: 380 })
-      tone(760, { type: 'sine', at: at + 0.02, duration: 0.07, volume: 0.02, slideTo: 1100 })
-      tone(120, { type: 'sawtooth', at: at + REP * 0.5, duration: 0.18, volume: 0.012, slideTo: 85 })
+      noise({ at, duration: 0.22, volume: 0.035, from: 500, to: 1400, q: 0.7 })
+      tone(620 + Math.random() * 200, { type: 'sine', at: at + 0.12, duration: 0.07, volume: 0.03, slideTo: 1300 })
+      tone(900 + Math.random() * 300, { type: 'sine', at: at + 0.2, duration: 0.06, volume: 0.022, slideTo: 1700 })
       next += REP
     }
   }
@@ -292,65 +292,78 @@ function treadmillStart() {
   schedule()
 }
 
-/** Letting go of the bar: the reps stop. */
+/** Stepping off the pad: the puffs stop. */
 function treadmillStop() {
   if (!bar) return
   clearInterval(bar.timer)
   bar = null
 }
 
-// --- The stretch: rubber creaking as you pull back on the launch posts ---------------
+// --- Blowing the big bubble: a long breath and a swelling, wobbling hum ---------------
 
 let stretch = null
 let stretchSetAt = 0
 
 /**
- * Holding LAUNCH: a taut rubber creak that climbs in pitch the further back you pull and,
- * once it's full, trembles with every twang. Moved by stretchSet, stopped by stretchStop.
+ * Holding BLOW: a long breath of air through the wand, with a soft round hum under it
+ * that swells in pitch as the bubble grows and, once it's full size, wobbles with it.
+ * Moved by stretchSet, stopped by stretchStop (the template's names).
  */
 function stretchStart() {
   if (!ctx || stretch || silent() || ctx.state !== 'running') return
   const t = ctx.currentTime
-  const osc = ctx.createOscillator()
-  osc.type = 'sawtooth'
-  osc.frequency.value = 70
+  // The breath: noise through a soft band.
+  const src = ctx.createBufferSource()
+  src.buffer = noiseBuffer
+  src.loop = true
   const filter = ctx.createBiquadFilter()
   filter.type = 'bandpass'
-  filter.frequency.value = 520
-  filter.Q.value = 3
+  filter.frequency.value = 700
+  filter.Q.value = 0.9
   const gain = ctx.createGain()
   gain.gain.setValueAtTime(0.0001, t)
-  gain.gain.setTargetAtTime(0.03, t, 0.05)
-  // The creak: the rubber's loudness fluttering fast.
+  gain.gain.setTargetAtTime(0.045, t, 0.06)
+  src.connect(filter).connect(gain).connect(master)
+  // The bubble's hum, wobbling.
+  const osc = ctx.createOscillator()
+  osc.type = 'sine'
+  osc.frequency.value = 180
+  const hum = ctx.createGain()
+  hum.gain.setValueAtTime(0.0001, t)
+  hum.gain.setTargetAtTime(0.035, t, 0.1)
   const lfo = ctx.createOscillator()
-  lfo.frequency.value = 14
+  lfo.frequency.value = 5
   const depth = ctx.createGain()
-  depth.gain.value = 0.018
-  lfo.connect(depth).connect(gain.gain)
-  osc.connect(filter).connect(gain).connect(master)
+  depth.gain.value = 6
+  lfo.connect(depth).connect(osc.frequency)
+  osc.connect(hum).connect(master)
+  src.start(t, Math.random() * 0.5)
   osc.start(t)
   lfo.start(t)
-  stretch = { osc, filter, gain, lfo }
+  stretch = { src, osc, filter, gain, hum, lfo, depth }
 }
 
-/** `charge` 0-1, the stretch meter; `full` once it twangs. Called every frame. */
+/** `charge` 0-1, the blow meter; `full` once the bubble wobbles. Called every frame. */
 function stretchSet(charge, full = false) {
   if (!stretch) return
   const now = performance.now()
   if (now - stretchSetAt < 40) return
   stretchSetAt = now
   const t = ctx.currentTime
-  stretch.osc.frequency.setTargetAtTime(70 + charge * 200, t, 0.03)
-  stretch.filter.frequency.setTargetAtTime(480 + charge * 1500, t, 0.04)
-  stretch.lfo.frequency.setTargetAtTime(full ? 32 : 12 + charge * 10, t, 0.05)
+  stretch.osc.frequency.setTargetAtTime(160 + charge * 260, t, 0.04)
+  stretch.filter.frequency.setTargetAtTime(600 + charge * 900, t, 0.05)
+  stretch.lfo.frequency.setTargetAtTime(full ? 9 : 4 + charge * 3, t, 0.05)
+  stretch.depth.gain.setTargetAtTime(full ? 22 : 6, t, 0.05)
 }
 
 function stretchStop() {
   if (!stretch) return
-  const { osc, gain, lfo } = stretch
+  const { src, osc, gain, hum, lfo } = stretch
   stretch = null
   const t = ctx.currentTime
   gain.gain.setTargetAtTime(0.0001, t, 0.03)
+  hum.gain.setTargetAtTime(0.0001, t, 0.03)
+  src.stop(t + 0.3)
   osc.stop(t + 0.3)
   lfo.stop(t + 0.3)
 }
@@ -444,7 +457,7 @@ export const sfx = {
   click() {
     if (ready('click', 40)) tone(660, { type: 'triangle', duration: 0.05, volume: 0.15 })
   },
-  /** A Health gain: a bright tick, softer for the ones that trickle in while you train. */
+  /** A Breath gain: a bright tick, softer for the ones that trickle in while you blow. */
   gain(soft = false) {
     if (ready('gain', 110)) tone(880 + Math.random() * 120, { type: 'triangle', duration: 0.07, volume: soft ? 0.05 : 0.07, slideTo: 1400 })
   },
@@ -452,7 +465,7 @@ export const sfx = {
     if (!ready('levelUp')) return
     ;[523, 659, 784, 1047].forEach((f, i) => tone(f, { type: 'square', at: i * 0.07, duration: 0.14, volume: 0.09 }))
   },
-  /** Shooting past the launch posts: a thump, a whoosh, a rising boing and a sparkle. */
+  /** The bubble leaping away: a thump, a whoosh, a rising boing and a sparkle. */
   rollStart() {
     if (!ready('rollStart')) return
     tone(110, { duration: 0.18, volume: 0.16, slideTo: 55 })
@@ -515,12 +528,64 @@ export const sfx = {
       tone(300 + Math.random() * 220, { type: 'triangle', at: 0.14 + i * 0.07 + Math.random() * 0.04, duration: 0.04, volume: 0.03 * p, slideTo: 190 })
     }
   },
-  /** Bouncing on after you land (`n` 1, 2, 3...): a thud and a boing, softer each time. */
-  bounce(n = 1) {
+  /**
+   * The bubble touching down (`n` 0 the first, 1, 2...): a springy BOI-OING that climbs as
+   * it leaves the ground and a soft rubbery thud - a little higher and softer every bounce.
+   */
+  bounce(n = 0) {
     if (!ready('bounce', 120)) return
-    const v = 0.16 / n
-    tone(150, { duration: 0.16, volume: v, slideTo: 60 })
-    tone(1250 - n * 90, { duration: 0.04, volume: v * 0.7, slideTo: 900 })
+    const v = 0.15 / (1 + n * 0.35)
+    tone(120, { duration: 0.14, volume: v * 0.9, slideTo: 60 })
+    tone(220 + n * 25, { type: 'triangle', at: 0.02, duration: 0.3, volume: v, slideTo: 640 + n * 40 })
+    tone(330 + n * 35, { type: 'sine', at: 0.04, duration: 0.24, volume: v * 0.5, slideTo: 900 + n * 50 })
+  },
+  /** Hopping into the bubble you blew: a wet "bloop" through its skin and a wobble. */
+  bubbleHop() {
+    if (!ready('bubbleHop', 250)) return
+    tone(300, { type: 'sine', duration: 0.18, volume: 0.13, slideTo: 900 })
+    tone(500, { type: 'sine', at: 0.12, duration: 0.22, volume: 0.07, slideTo: 260 })
+    noise({ at: 0.05, duration: 0.18, volume: 0.05, from: 1600, to: 600, q: 1.4 })
+  },
+  /** A bubble popping: a bright snap, a spray of tiny droplets, a falling squeak. */
+  bubblePop() {
+    if (!ready('bubblePop', 200)) return
+    noise({ duration: 0.06, volume: 0.28, from: 4200, to: 1800, q: 1.1 })
+    tone(1400, { type: 'triangle', duration: 0.09, volume: 0.1, slideTo: 420 })
+    for (let i = 0; i < 6; i += 1) tone(1800 + Math.random() * 1600, { type: 'sine', at: 0.04 + i * 0.03, duration: 0.04, volume: 0.025 })
+  },
+  /**
+   * A PERFECT BOUNCE (`combo` 1, 2, 3... in a row): a bright springy boing and a sparkling
+   * run of bells that climbs a step higher with every one in a row.
+   */
+  perfectBounce(combo = 1) {
+    if (!ready('perfectBounce', 80)) return
+    const step = Math.min(7, combo - 1)
+    tone(330 + step * 30, { type: 'triangle', duration: 0.22, volume: 0.12, slideTo: 990 + step * 60 })
+    ;[0, 4, 7].forEach((semi, i) => bell(784 * Math.pow(2, (semi + step * 2) / 12), { at: 0.05 + i * 0.05, volume: 0.07, decay: 0.35 }))
+    noise({ at: 0.02, duration: 0.18, volume: 0.05, from: 2000, to: 6000, q: 0.8 })
+  },
+  /** A GOOD BOUNCE: a softer boing and a single chime. */
+  goodBounce() {
+    if (!ready('goodBounce', 80)) return
+    tone(300, { type: 'triangle', duration: 0.18, volume: 0.09, slideTo: 700 })
+    bell(988, { at: 0.04, volume: 0.05, decay: 0.25 })
+  },
+  /** A MISS: a dull little blip. */
+  missBounce() {
+    if (!ready('missBounce', 120)) return
+    tone(220, { type: 'square', duration: 0.09, volume: 0.04, slideTo: 140 })
+  },
+  /** A little bubble popping: a tiny bright snap, much softer than the big pop. */
+  smallPop() {
+    if (!ready('smallPop', 80)) return
+    noise({ duration: 0.04, volume: 0.12, from: 5200, to: 2600, q: 1.2 })
+    tone(1700 + Math.random() * 700, { type: 'triangle', duration: 0.05, volume: 0.05, slideTo: 900 })
+  },
+  /** One tap of BLOW: a short puff and a bubbly blip, a little different every time. */
+  blowPuff() {
+    if (!ready('blowPuff', 60)) return
+    noise({ duration: 0.12, volume: 0.05, from: 700, to: 1500, q: 0.8 })
+    tone(700 + Math.random() * 400, { type: 'sine', at: 0.05, duration: 0.07, volume: 0.04, slideTo: 1500 + Math.random() * 400 })
   },
   /** A cartoon falling whistle over `duration` seconds, as you drop from the top of the arc. */
   fallWhistle(duration = 1.5) {
@@ -680,7 +745,7 @@ export const sfx = {
     noise({ duration: 0.5, volume: 0.07, from: 200, to: 1800, q: 0.6 })
     ;[262, 330, 392, 523, 659, 784].forEach((f, i) => tone(f, { type: 'sawtooth', at: 0.1 + i * 0.07, duration: 0.25, volume: 0.06 }))
   },
-  /** Grabbing an unlocked pull-up bar: a soft rising chime, and the reps start. */
+  /** Stepping onto an unlocked Blow Pad: a soft rising chime, and the puffs start. */
   treadmillEnter() {
     if (!ready('treadmillEnter', 400)) return
     ;[523, 784, 1047].forEach((f, i) => tone(f, { type: 'sine', at: i * 0.05, duration: 0.28, volume: 0.07 }))

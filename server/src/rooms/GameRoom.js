@@ -145,9 +145,9 @@ export class GameRoom extends Room {
         return ok
       },
       onRoll: (result) => {
-        // Everyone else watches it as a ghost tire. Excluded by session id, not by the
+        // Everyone else watches it as a ghost bubble. Excluded by session id, not by the
         // client object from the join: after a reconnect that object is stale, and the
-        // roller would get their own roll back as a second tire.
+        // bouncer would get their own bounce back as a second bubble.
         const self = this.clients.find((c) => c.sessionId === client.sessionId)
         this.broadcast(
           'ghostRoll',
@@ -165,6 +165,11 @@ export class GameRoom extends Room {
           },
           self ? { except: self } : undefined,
         )
+      },
+      // A PERFECT BOUNCE: everyone else's replay of this bounce surges on with it.
+      onBounceBoost: (boost) => {
+        const self = this.clients.find((c) => c.sessionId === client.sessionId)
+        this.broadcast('ghostBoost', { sid: client.sessionId, ...boost }, self ? { except: self } : undefined)
       },
     })
 

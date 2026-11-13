@@ -3,6 +3,12 @@ import { test } from 'node:test'
 
 import {
   AD_REWARDS,
+  BLOW_TAP_BURST,
+  BLOW_TAP_RATE,
+  bounceCount,
+  bounceTimes,
+  MAX_PERFECT_BOUNCES,
+  PERFECT_BOUNCE_REACH,
   EGGS,
   GEM_PRODUCTS,
   healthForLevel,
@@ -26,7 +32,7 @@ import {
   applyRebirth,
   applyRoll,
   baseRollWins,
-  applyTrain,
+  applyBlowTap,
   buyHealthPack,
   buyTire,
   createProfile,
@@ -44,7 +50,7 @@ import {
   usePortal,
 } from '../../shared/logic.js'
 import { PlayerSession } from '../../shared/session.js'
-import { LAUNCH_STAND, MAX_PULL, maxPullFor, PAD_X, padCenterZ, PORTALS, ROLL_ZONE, SPAWN, STAR } from '../../shared/world.js'
+import { PAD_X, padCenterZ, PORTALS, ROLL_ZONE, SPAWN, STAR } from '../../shared/world.js'
 
 const onPad = (i) => ({ x: PAD_X, y: 0.5, z: padCenterZ(i) })
 const inRollZone = () => ({ x: 0, y: 0, z: (ROLL_ZONE.minZ + ROLL_ZONE.maxZ) / 2 })
@@ -59,7 +65,7 @@ function makeSession(pos, profile = createProfile('a', 'A')) {
 
 /** Trains on pad 0 until max level. */
 function maxOut(p) {
-  for (let i = 0; i < 1e5 && p.level < levelCap(p.rebirths); i += 1) applyTrain(p, 0, 0)
+  for (let i = 0; i < 1e5 && p.level < levelCap(p.rebirths); i += 1) applyBlowTap(p, 0, 0)
 }
 
 // --- Formatting ------------------------------------------------------------------
@@ -90,35 +96,37 @@ test('each level needs more Health than the last', () => {
   assert.equal(levelFor(1e12, 1), 23)
 })
 
-test('the first pad gives the tire power per step and stops at max level', () => {
+test('the first pad gives the bubble power per tap and stops at max level', () => {
   const p = createProfile('a', 'A')
-  for (let i = 0; i < 10; i += 1) applyTrain(p, 0, 0)
+  for (let i = 0; i < 10; i += 1) applyBlowTap(p, 0, 0)
   assert.equal(p.health, 10)
   maxOut(p)
   assert.equal(p.health, healthForLevel(15))
   assert.equal(p.level, 15)
-  assert.equal(applyTrain(p, 0, 0).gain, 0, 'no more natural gains at max level')
+  assert.equal(applyBlowTap(p, 0, 0).gain, 0, 'no more natural gains at max level')
   assert.equal(p.health, healthForLevel(15))
 })
 
-test('locked pads give nothing', () => {
+test('a locked pad pays only the bubble gain and is not remembered for offline progress', () => {
   const p = createProfile('a', 'A')
-  assert.equal(applyTrain(p, 1, 0).ok, false)
-  assert.equal(p.health, 0)
+  assert.equal(applyBlowTap(p, 1, 0).gain, TIRES[0].power)
+  assert.equal(p.lastPad, -1)
+  applyBlowTap(p, 0, 0)
+  assert.equal(p.lastPad, 0)
 })
 
 test('better tires add power, rebirths multiply it', () => {
   const p = createProfile('a', 'A')
-  p.ownedTires.push('mountain')
-  p.equippedTire = 'mountain'
-  applyTrain(p, 0, 0)
+  p.ownedTires.push('drop')
+  p.equippedTire = 'drop'
+  applyBlowTap(p, 0, 0)
   assert.equal(p.health, TIRES[1].power)
   p.rebirths = 1
   p.health = 0
   p.level = 1
-  applyTrain(p, 0, 0)
+  applyBlowTap(p, 0, 0)
   assert.equal(p.health, TIRES[1].power * 2)
-  applyTrain(p, 1, 0)
+  applyBlowTap(p, 1, 0)
   assert.equal(p.health, TIRES[1].power * 2 + TIRES[1].power * 2 * 2, 'Speed Pad is x2 on top')
 })
 
@@ -127,13 +135,13 @@ test('rebirth needs max level, resets Health, keeps Wins and tires', () => {
   assert.equal(applyRebirth(p).ok, false)
   maxOut(p)
   p.wins = 50
-  p.ownedTires.push('mountain')
+  p.ownedTires.push('drop')
   assert.equal(applyRebirth(p).ok, true)
   assert.equal(p.rebirths, 1)
   assert.equal(p.health, 0)
   assert.equal(p.level, 1)
   assert.equal(p.wins, 50)
-  assert.deepEqual(p.ownedTires, ['bicycle', 'mountain'])
+  assert.deepEqual(p.ownedTires, ['soap', 'drop'])
 })
 
 test('skipping to a rebirth costs Wins', () => {
@@ -303,8 +311,8 @@ test('old or corrupt saves load with defaults filled in', () => {
   assert.equal(p.wins, 0)
   assert.deepEqual(p.pets, [])
   assert.deepEqual(p.equippedPets, [])
-  assert.deepEqual(p.ownedTires, ['bicycle'])
-  assert.equal(p.equippedTire, 'bicycle')
+  assert.deepEqual(p.ownedTires, ['soap'])
+  assert.equal(p.equippedTire, 'soap')
   assert.equal(p.stats.rolls, 3)
   assert.equal(p.stats.bestDistance, 0)
   assert.deepEqual(p.settings, { autoRebirth: false, autoRoll: false })
@@ -319,32 +327,45 @@ test('only brand-new players get the tutorial', () => {
 
 // --- The session -----------------------------------------------------------------
 
-test('training only counts on the pad the player really stands on', () => {
+test('standing still on the pad you really stand on trains; walking across a pad does not', () => {
   const pos = { x: SPAWN.x, y: 0, z: SPAWN.z }
   const { session, profile } = makeSession(pos)
   session.handle('enterPad', { pad: 0 }, 0)
-  session.tick(0.1, 0)
-  session.tick(2, 0)
+  for (let i = 0; i < 20; i += 1) session.tick(0.1, i * 100)
   assert.equal(profile.health, 0, 'claimed a pad from spawn')
-  Object.assign(pos, onPad(0))
-  session.tick(0.1, 0)
-  session.tick(2, 0)
-  assert.ok(profile.health > 0)
+  // Walk straight across the pad, a tenth of a metre a tick on: nothing.
+  const start = onPad(0)
+  for (let i = 0; i < 40; i += 1) {
+    Object.assign(pos, { x: start.x - 2 + i * 0.1, y: 0.5, z: start.z })
+    session.tick(0.1, 2000 + i * 100)
+  }
+  assert.equal(profile.health, 0, 'walking over the pad')
+  // Stand still on it: a step every TRAIN_INTERVAL, after a moment of standing.
+  Object.assign(pos, start)
+  for (let i = 0; i < 40; i += 1) session.tick(0.1, 6000 + i * 100)
+  assert.ok(profile.health >= 3, 'four seconds on the pad: ' + profile.health)
   session.handle('enterPad', { pad: 1 }, 0)
   assert.equal(session.pad, 0, 'a locked pad cannot be entered')
 })
 
-test('the first guide step completes on the pad once Health reaches 30', () => {
+test('the first guide step completes by standing on the pad once Breath reaches 15', () => {
   assert.equal(TUTORIAL[0].event, 'train')
-  assert.equal(TUTORIAL[0].health, 30)
+  assert.equal(TUTORIAL[0].health, 15)
   const pos = onPad(0)
   const { session, profile } = makeSession(pos)
   session.handle('enterPad', { pad: 0 }, 0)
   let t = 0
-  while (profile.health < 29) session.tick(0.1, (t += 100))
+  while (profile.health < 14) session.tick(0.1, (t += 100))
   assert.equal(profile.tutorialStep, 0)
-  while (profile.health < 30) session.tick(0.1, (t += 100))
+  while (profile.health < 15) session.tick(0.1, (t += 100))
   assert.equal(profile.tutorialStep, 1)
+})
+
+test('a tap of BLOW on a pad pays on top of the training', () => {
+  const { session, profile } = makeSession(onPad(0))
+  session.handle('enterPad', { pad: 0 }, 0)
+  session.handle('blow', {}, 1000)
+  assert.equal(profile.health, padGain(profile, 0, 1000))
 })
 
 test('rolls start only from the roll zone, one at a time', () => {
@@ -531,30 +552,111 @@ test("Palm Beach's Secret Star: found once, there only, for x2 Power everywhere"
   assert.equal(far.count('star'), 0)
 })
 
-// --- The stretch lane ------------------------------------------------------------
+// --- Blowing: taps and the bounce ---------------------------------------------------
 
-test('walking further back down the stretch lane flings you further and pays more, up to your arms reach', () => {
-  const launchFrom = (back, tire) => {
-    const profile = createProfile('a', 'A')
-    profile.health = 5000
-    if (tire) {
-      profile.ownedTires.push(tire)
-      profile.equippedTire = tire
-    }
-    const { session, events } = makeSession({ x: LAUNCH_STAND.x, y: 0, z: LAUNCH_STAND.z + back }, profile)
-    session.handle('roll', { accuracy: 0.5 }, 1000)
-    return events.find((e) => e.type === 'roll').payload
+test('a tap of BLOW pays a gain: the pad\'s on a Blow Pad, the bubble\'s anywhere else', () => {
+  const off = makeSession({ x: 0, y: 0, z: 0 })
+  off.session.handle('blow', {}, 1000)
+  assert.equal(off.profile.health, TIRES[0].power)
+  const on = makeSession(onPad(0))
+  on.profile.rebirths = 1
+  on.session.handle('blow', {}, 1000)
+  assert.equal(on.profile.health, padGain(on.profile, 0, 1000) / 1, 'a pad gain')
+  const gains = on.events.filter((e) => e.type === 'train')
+  assert.equal(gains.at(-1).payload.source, 'blow')
+  assert.equal(gains.at(-1).payload.pad, 0)
+})
+
+test('taps of BLOW are rate limited: a burst, then BLOW_TAP_RATE a second', () => {
+  const { session, events } = makeSession({ x: 0, y: 0, z: 0 })
+  // A hundred taps in the same millisecond: only the burst lands.
+  for (let i = 0; i < 100; i += 1) session.handle('blow', {}, 5000)
+  const taps = () => events.filter((e) => e.type === 'train' && e.payload.source === 'blow').length
+  assert.equal(taps(), BLOW_TAP_BURST)
+  // A second later, BLOW_TAP_RATE more.
+  for (let i = 0; i < 100; i += 1) session.handle('blow', {}, 6000)
+  assert.equal(taps(), BLOW_TAP_BURST + BLOW_TAP_RATE)
+})
+
+test('no BLOW taps while you bounce', () => {
+  const { session, events } = makeSession(inRollZone())
+  session.handle('roll', { accuracy: 0.95 }, 1000)
+  session.handle('blow', {}, 1200)
+  assert.equal(events.filter((e) => e.type === 'train' && e.payload.source === 'blow').length, 0)
+})
+
+test('a bubble bounces a few times on a short trip and more on a long one', () => {
+  assert.ok(bounceCount(0) >= 3)
+  assert.ok(bounceCount(1000) > bounceCount(60))
+  assert.ok(bounceCount(1e6) <= 16)
+})
+
+test('walking round the lobby earns no Breath: only pads, taps of BLOW and bouncing do', () => {
+  const pos = { x: 0, y: 0, z: 40 }
+  const { session, profile, events } = makeSession(pos)
+  // Walk 200 m at a brisk pace, ticking as the room does.
+  for (let i = 0; i < 200; i += 1) {
+    pos.z = 40 - (i % 2 ? 1 : 0)
+    pos.x = (i * 1) % 30
+    session.tick(0.1, 1000 + i * 100)
   }
-  const stood = launchFrom(0)
-  const short = launchFrom(3)
-  assert.equal(stood.stretch, 0)
-  assert.ok(short.distance > stood.distance && short.wins >= stood.wins)
-  // Starter arms only reach a few metres: walking the whole lane counts no further.
-  const cheat = launchFrom(MAX_PULL)
-  assert.ok(cheat.stretch <= maxPullFor('bicycle', 1, 15) + 0.6) // (+0.5 lag slack, rounded)
-  // The best arms reach (nearly) the whole 40 m - and fly much further for it.
-  const best = TIRES[TIRES.length - 1].id
-  const far = launchFrom(MAX_PULL, best)
-  assert.ok(far.stretch > cheat.stretch * 3)
-  assert.ok(far.distance > stood.distance * 1.3)
+  assert.equal(profile.health, 0)
+  assert.equal(events.filter((e) => e.type === 'train').length, 0)
+})
+
+// --- PERFECT BOUNCE taps ---------------------------------------------------------------
+
+/** A bounce from the Blow Zone at server time 1000, and its touch-down times (ms). */
+function bounceAt(profile = createProfile('a', 'A')) {
+  const s = makeSession(inRollZone(), profile)
+  s.session.handle('roll', { accuracy: 0.95 }, 1000)
+  const roll = s.events.find((e) => e.type === 'roll').payload
+  const { touchdowns } = bounceTimes(roll.distance, roll.duration)
+  return { ...s, roll, at: touchdowns.map((t) => 1000 + t * 1000) }
+}
+
+test('a PERFECT BOUNCE carries the bubble further and pays Wins and Breath; a GOOD one Breath', () => {
+  const { session, profile, events, roll, at } = bounceAt()
+  const wins0 = profile.wins
+  session.handle('bounceTap', { k: 0, grade: 'perfect' }, at[0] + 150)
+  const boost = events.find((e) => e.type === 'bounceBoost').payload
+  assert.equal(boost.grade, 'perfect')
+  assert.ok(Math.abs(boost.add - roll.distance * PERFECT_BOUNCE_REACH) < 0.2)
+  assert.ok(boost.distance > roll.distance)
+  assert.ok(profile.wins > wins0)
+  assert.ok(profile.stats.bestDistance >= boost.distance)
+  const h = profile.health
+  session.handle('bounceTap', { k: 1, grade: 'good' }, at[1] + 150)
+  const good = events.filter((e) => e.type === 'bounceBoost').at(-1).payload
+  assert.equal(good.grade, 'good')
+  assert.equal(good.add, 0)
+  assert.ok(profile.health > h, 'a GOOD bounce pays Breath')
+})
+
+test('each touch-down counts once, only near its time, and only during the bounce', () => {
+  const { session, events, at } = bounceAt()
+  const boosts = () => events.filter((e) => e.type === 'bounceBoost').length
+  session.handle('bounceTap', { k: 0, grade: 'perfect' }, at[0] + 100)
+  session.handle('bounceTap', { k: 0, grade: 'perfect' }, at[0] + 200)
+  assert.equal(boosts(), 1, 'twice on one touch-down')
+  session.handle('bounceTap', { k: 1, grade: 'perfect' }, at[1] - 2000)
+  session.handle('bounceTap', { k: 1, grade: 'perfect' }, at[1] + 5000)
+  assert.equal(boosts(), 1, 'far from its time')
+  session.handle('bounceTap', { k: 99, grade: 'perfect' }, at[0] + 100)
+  session.handle('bounceTap', { k: 1, grade: 'great' }, at[1] + 100)
+  assert.equal(boosts(), 1, 'no such touch-down, or no such grade')
+  const idle = makeSession(inRollZone())
+  idle.session.handle('bounceTap', { k: 0, grade: 'perfect' }, 5000)
+  assert.equal(idle.events.filter((e) => e.type === 'bounceBoost').length, 0, 'not bouncing')
+})
+
+test('at most MAX_PERFECT_BOUNCES PERFECTs count in one bounce', () => {
+  const profile = createProfile('a', 'A')
+  profile.health = 1e9
+  const { session, events, at } = bounceAt(profile)
+  assert.ok(at.length > MAX_PERFECT_BOUNCES, 'a long bounce has more touch-downs than the cap')
+  at.forEach((t, k) => session.handle('bounceTap', { k, grade: 'perfect' }, t + 100))
+  const grades = events.filter((e) => e.type === 'bounceBoost').map((e) => e.payload.grade)
+  assert.equal(grades.filter((g) => g === 'perfect').length, MAX_PERFECT_BOUNCES)
+  assert.equal(grades.length, at.length)
 })

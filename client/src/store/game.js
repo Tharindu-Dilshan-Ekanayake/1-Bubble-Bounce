@@ -37,7 +37,7 @@ export const useGame = create((set, get) => ({
   leaderboards: null,
 
   /** Where the player is standing, from the ticker. */
-  zone: { pad: -1, padNear: -1, rollZone: false, atPosts: false, stand: -1, egg: null, portal: null, freeReward: false, sphinx: false },
+  zone: { pad: -1, padNear: -1, rollZone: false, stand: -1, egg: null, portal: null, freeReward: false, sphinx: false },
 
   /** Which modal panel is open: 'rebirth' | 'daily' | 'pets' | 'items' | 'store' | ... */
   panel: null,
@@ -77,6 +77,19 @@ export const useGame = create((set, get) => ({
 
   // A lucky gift's Wins wait for the landing too.
   startRoll: (roll) => set({ roll, pendingWins: roll.wins + roll.prize + (roll.giftWins || 0) }),
+  /**
+   * A PERFECT BOUNCE counted (`{ distance, wins, prize }`): the bounce goes further and
+   * pays more - held back from the HUD with the rest until the bubble pops.
+   */
+  boostRoll: ({ distance, wins = 0, prize = 0, best = false }) =>
+    set((s) =>
+      s.roll
+        ? {
+            roll: { ...s.roll, distance: Math.max(s.roll.distance, distance || 0), wins: s.roll.wins + wins, prize: s.roll.prize + prize, best: s.roll.best || best },
+            pendingWins: s.pendingWins + wins + prize,
+          }
+        : {},
+    ),
   endRoll: () => {
     const { roll } = get()
     set({

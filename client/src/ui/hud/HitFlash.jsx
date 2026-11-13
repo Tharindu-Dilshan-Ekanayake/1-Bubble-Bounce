@@ -24,7 +24,7 @@ const CARDS = [
     gradient: 'linear-gradient(180deg, #ffffff 0%, #fffbe0 40%, #ffe27a 70%, #ffb21e 100%)',
     rays: null,
     stars: 4,
-    badges: [['NICE FLING!', 'linear-gradient(180deg, #ffffff 0%, #ffe27a 100%)']],
+    badges: [['NICE BLOW!', 'linear-gradient(180deg, #ffffff 0%, #ffe27a 100%)']],
   },
   {
     id: 'great',
@@ -34,7 +34,7 @@ const CARDS = [
     rays: 'rgba(95, 214, 255, 0.45)',
     stars: 6,
     badges: [
-      [`STRONG FLING ${extraDistance('great')}`, 'linear-gradient(180deg, #8affc8 0%, #2fd0ff 100%)'],
+      [`BIG BUBBLE ${extraDistance('great')}`, 'linear-gradient(180deg, #8affc8 0%, #2fd0ff 100%)'],
       [`x${bonusOf('great')} WINS`, 'linear-gradient(180deg, #fff27a 0%, #ffb21e 100%)'],
     ],
   },
@@ -46,7 +46,7 @@ const CARDS = [
     rays: 'rgba(255, 214, 60, 0.5)',
     stars: 8,
     badges: [
-      [`MEGA FLING ${extraDistance('perfect')}`, 'linear-gradient(180deg, #ff9a3a 0%, #ff3b3b 100%)'],
+      [`MEGA BUBBLE ${extraDistance('perfect')}`, 'linear-gradient(180deg, #ff9a3a 0%, #ff3b3b 100%)'],
       [`x${bonusOf('perfect')} WINS`, 'linear-gradient(180deg, #fff27a 0%, #ffb21e 100%)'],
     ],
   },

@@ -1,25 +1,28 @@
 import { useFrame } from '@react-three/fiber'
 import { Suspense, useEffect, useMemo, useRef } from 'react'
-import { Quaternion, Vector3 } from 'three'
+import { Color, Quaternion, Vector3 } from 'three'
 
-import { levelCap } from '@shared/balance'
 import { isPadUnlocked } from '@shared/logic'
-import { clampToWalkable, groundHeightAt, LAUNCH_STAND, PAD_YAW, padAt, padBarHeight, STATIC_COLLIDERS } from '@shared/world'
+import { clampToWalkable, groundHeightAt, PAD_YAW, padAt, STATIC_COLLIDERS } from '@shared/world'
 
 import { sfx } from '../audio/sfx'
 import { getGame } from '../store/game'
+import { getQuality } from '../store/quality'
 import ErrorBoundary from '../ui/ErrorBoundary'
 import FallbackAvatar from './FallbackAvatar'
 import PlayerAvatar from './PlayerAvatar'
 import { RUN_CADENCE } from './kick'
 import { actions } from '../net/actions'
-import { armGrowth } from './armStyles'
-import { cancelPull, grab, isPulling, launch, letGo, updatePull } from './launch'
-import { BODY, GRIP } from './playerPose'
-import { flierTurn, maxPullFor } from './roll/path'
+import { setBubbleLook } from './bubbles'
+import { emitPuffs, PUFF_STREAM, PUFF_TAP, takeTapPuffs } from './fx/puffQueue'
+import { cancelBlow, heldTooLong, isBlowing, launch, releaseBlow, updateBlow } from './launch'
+import { BODY, holdsWand, WAND_RING } from './playerPose'
+import { flierTurn } from './roll/path'
 import { roll } from './roll/rollControl'
 import { runtime } from './runtime'
+import { tireGlow } from './tire'
 import useKeyboard from './useKeyboard'
+import { Wand } from './Wand'
 
 export const PLAYER_HEIGHT = 1.8
 const RADIUS = 0.45
@@ -28,20 +31,8 @@ const WALK_SPEED = 10.875
 const ACCELERATION = 16
 const GRAVITY = 32
 const JUMP_SPEED = 10.5
-/** Ledges up to this high are walked straight onto (the showroom's back stage). */
+/** Ledges up to this high are walked straight onto (the shop's back stage). */
 const STEP_UP = 1.05
-/**
- * Walking back holding the launch posts, straining against the rubber: this fast at most
- * (m/s) - quicker with longer arms, so even the full 40 m lane takes only a few seconds
- * (always well under the server's MAX_MOVE_SPEED).
- */
-const pullWalk = (maxPull) => Math.min(12, Math.max(5, maxPull / 3.6))
-/** Reaching the stand spot this close to the posts grabs them by itself. */
-const AUTO_GRAB = 0.9
-/** Walked back at least this far, stopping pulling back lets go (a launch). */
-const ARMED_BACK = 0.8
-/** Not pulling back for this long (s) lets go: a flicker of the stick doesn't. */
-const LET_GO_AFTER = 0.12
 
 // Scratch objects, reused each frame so the loop allocates nothing.
 const _input = new Vector3()
@@ -53,6 +44,8 @@ const _up = new Vector3(0, 1, 0)
 const _clamped = { x: 0, z: 0 }
 const _pivot = new Vector3()
 const _hip = new Vector3()
+const _ring = new Vector3()
+const _c = new Color()
 
 /** Pushes a circle out of an axis-aligned rect. Returns true on contact. */
 function pushOut(pos, rect) {
@@ -92,15 +85,12 @@ function pushOut(pos, rect) {
  * rectangular walls, which a circle-vs-rect push-out handles exactly. That saves the
  * ~2 MB Rapier WASM download and keeps the active rigid body count at zero.
  *
- * Walk up to the LAUNCH PAD's two posts and you grab them (or press LAUNCH, launch.js),
- * standing on the spot behind them; then your own joystick or keys walk you straight back
- * (no further than your arms reach, maxPullFor), arms stretching like rubber. Stop
- * pulling back - let go of the stick or key - and the launch is sent, no button needed;
- * the launch plays: your
- * logical position stays on the pad (what the server checks) while your avatar is slung
- * past the posts and flies down the runway (roll/path.rideState), diving flat and
- * barrel-rolling about its middle. On a pull-up bar you face east and do rubber-arm
- * pull-ups.
+ * Standing still on an unlocked Blow Pad you face its hoop and blow bubbles through your
+ * wand, little bubbles drifting off it with every puff (and with every tap of BLOW). In
+ * the BLOW ZONE, holding BLOW (RollButton) keeps you on the spot, facing the valley,
+ * blowing your giant bubble (launch.js); let go and the bounce plays: your logical
+ * position stays in the zone (what the server checks) while your avatar hops into the
+ * bubble and floats inside it down the valley (roll/path.rideState).
  *
  * Reads and writes `runtime.player`; never touches React state per frame.
  *
@@ -109,11 +99,12 @@ function pushOut(pos, rect) {
 export function Player({ onAvatarReady }) {
   const groupRef = useRef(null)
   const visualRef = useRef(null)
+  const wandRef = useRef(null)
   const keys = useKeyboard()
-  /** How long you've held the posts without pulling back (seconds). */
-  const letGoTimer = useRef(0)
   const velocity = useRef(new Vector3())
   const vy = useRef(0)
+  /** The puff phase last blown out on a pad (one burst of little bubbles per puff). */
+  const lastPuff = useRef(0)
 
   /** Handed to the avatar so it can pose itself. A ref: written every frame. */
   const motionRef = useRef({
@@ -123,13 +114,15 @@ export function Player({ onAvatarReady }) {
     maxSpeed: WALK_SPEED,
     vy: 0,
     stride: 0,
-    grip: -1,
+    charge: -1,
   })
 
-  // The blob shadow follows the character (or, flying, the point under it).
+  // The blob shadow follows the character (or, bouncing, the bubble's spot on the ground).
   const shownAt = useMemo(() => new Vector3().copy(runtime.player.position), [])
+  const casterRef = useRef(null)
   useEffect(() => {
     const caster = { position: shownAt, size: 1.1 }
+    casterRef.current = caster
     runtime.shadowCasters.add(caster)
     return () => runtime.shadowCasters.delete(caster)
   }, [shownAt])
@@ -146,27 +139,24 @@ export function Player({ onAvatarReady }) {
 
     const group = groupRef.current
     const visual = visualRef.current
+    const wand = wandRef.current
+    const profile = getGame().profile
 
-    // --- The launch posts: grabbed, walking back, let go ------------------------
-    // Walking up to the posts and reaching the spot behind them grabs them by itself.
-    if (!roll.active && !isPulling() && !player.frozen && player.grounded && !getGame().panel) {
-      if (Math.hypot(pos.x - LAUNCH_STAND.x, pos.z - LAUNCH_STAND.z) < AUTO_GRAB) {
-        grab(false)
-        sfx.stretchStart()
+    // --- Blowing the giant bubble in the Blow Zone ---------------------------------
+    const blowingBig = !roll.active && isBlowing()
+    if (blowingBig) {
+      updateBlow(now)
+      // Held at full size too long: it lets go by itself (graded as it stands).
+      if (heldTooLong(now)) {
+        const charge = releaseBlow(now)
+        sfx.stretchStop()
+        actions.roll(Math.round(charge * 1000) / 1000)
       }
-    }
-    const pulling = !roll.active && isPulling()
-    const maxPull = maxPullFor(getGame().profile.equippedTire, getGame().profile.level, levelCap(getGame().profile.rebirths))
-    if (pulling && launch.snap) {
-      // Just grabbed: onto the spot behind the posts, facing down the runway.
-      launch.snap = false
-      pos.set(LAUNCH_STAND.x, groundHeightAt(LAUNCH_STAND.x, LAUNCH_STAND.z), LAUNCH_STAND.z)
-      velocity.current.set(0, 0, 0)
     }
 
     // --- Input, relative to the camera ----------------------------------------
     _input.set(0, 0, 0)
-    const still = player.frozen || launch.released
+    const still = player.frozen || blowingBig
     if (!still) {
       _input.set(
         (k.right ? 1 : 0) - (k.left ? 1 : 0) + joy.joyX,
@@ -194,42 +184,15 @@ export function Player({ onAvatarReady }) {
       _move.set(0, 0, 0)
     }
 
-    if (pulling) {
-      // Holding the posts: only straight back (south, +Z) and in again, at a strained
-      // walk, no further than the arms reach. Auto Launch walks you back by itself.
-      const pullingBack = launch.auto || _move.z > WALK_SPEED * 0.15
-      const walk = pullWalk(maxPull)
-      const back = launch.auto ? walk : (_move.z / WALK_SPEED) * walk
-      _move.set(0, 0, launch.released ? 0 : back)
-      // Walked back far enough, then stopped pulling: that's the let-go. Fired from here
-      // (not a button): the meter as it stood is what the launch is graded on.
-      if (pullingBack) letGoTimer.current = 0
-      else if (launch.gripping && !launch.auto && pos.z - LAUNCH_STAND.z > ARMED_BACK) {
-        letGoTimer.current += delta
-        if (letGoTimer.current > LET_GO_AFTER) {
-          const charge = letGo()
-          sfx.stretchStop()
-          actions.roll(Math.round(charge * 1000) / 1000)
-        }
-      }
-    } else {
-      letGoTimer.current = 0
-    }
-
     // Ease towards the target velocity: crisp, but no instant 0->max snaps.
     const blend = 1 - Math.exp(-ACCELERATION * delta)
-    velocity.current.lerp(_move, blend)
+    velocity.current.lerp(_move, blowingBig ? 1 : blend)
 
     // --- Horizontal move + collision --------------------------------------------
     const prevX = pos.x
     const prevZ = pos.z
     pos.x += velocity.current.x * delta
     pos.z += velocity.current.z * delta
-    if (pulling) {
-      pos.x = LAUNCH_STAND.x
-      pos.z = Math.min(LAUNCH_STAND.z + maxPull, Math.max(LAUNCH_STAND.z, pos.z))
-    }
-    updatePull(now, pulling ? pos.z - LAUNCH_STAND.z : 0, maxPull)
 
     for (const rect of STATIC_COLLIDERS) pushOut(pos, rect)
     for (const rect of runtime.dynamicColliders) pushOut(pos, rect)
@@ -246,10 +209,14 @@ export function Player({ onAvatarReady }) {
     }
 
     // --- Vertical ---------------------------------------------------------------
-    const wantJump = !still && (k.jump || joy.jump)
-    // Jumping lets go of the posts (no launch).
-    if (wantJump && pulling) cancelPull()
-    if (wantJump && player.grounded) {
+    const wantJump = !player.frozen && (k.jump || joy.jump)
+    // Jumping while blowing the giant bubble pops it (no bounce).
+    if (wantJump && blowingBig && launch.charging) {
+      cancelBlow()
+      sfx.stretchStop()
+      sfx.bubblePop()
+    }
+    if (wantJump && player.grounded && !isBlowing()) {
       vy.current = JUMP_SPEED
       player.grounded = false
       sfx.jump()
@@ -270,32 +237,29 @@ export function Player({ onAvatarReady }) {
 
     // --- Facing -----------------------------------------------------------------
     const speed = Math.hypot(velocity.current.x, velocity.current.z)
-    // Standing still under an unlocked bar: pull-ups, facing along it.
+    // Standing still on an unlocked Blow Pad: blowing bubbles, facing its hoop.
     const pad = padAt(pos.x, pos.z)
-    const training = pad >= 0 && player.grounded && speed < 0.5 && !still && isPadUnlocked(getGame().profile, pad)
+    const training = pad >= 0 && player.grounded && speed < 0.5 && !still && isPadUnlocked(profile, pad)
     if (training) player.yaw = PAD_YAW
-    else if (pulling) player.yaw = Math.PI
+    else if (blowingBig) player.yaw = Math.PI
     else if (speed > 0.3) player.yaw = Math.atan2(velocity.current.x, velocity.current.z)
 
-    // --- Where the body is: on the ground, walked back by the stretch, or flying ---
-    const profile = getGame().profile
-    motion.grow = armGrowth(profile.equippedTire, profile.level, levelCap(profile.rebirths))
-    motion.grip = -1
-    motion.strain = 0
+    // --- Where the body is: on the ground, or in the bubble ------------------------
+    motion.charge = -1
     motion.pitch = 0
+    motion.hop = 0
+    motion.perch = 0
+    motion.sink = 0
     motion.fly = 0
-    motion.sprawl = 0
     motion.cheer = 0
     if (roll.active) {
-      // The launch: slung past the posts and down the runway (rollControl/path).
+      // The bounce: hopping into the bubble and floating inside it (rollControl/path).
       _pivot.copy(roll.position)
-      motion.grip = roll.grip
-      motion.strain = roll.strain
-      motion.pitch = roll.pitch
+      motion.hop = roll.hop
+      motion.perch = roll.perch
+      motion.sink = roll.sink
       motion.fly = roll.fly
-      motion.sprawl = roll.sprawl
       motion.cheer = roll.cheer
-      motion.reach = roll.hit === 'perfect' ? 1.9 : roll.hit === 'great' ? 1.65 : 1.4
       if (visual) flierTurn(roll, visual.quaternion)
     } else {
       // Step-ups ease in over a few frames on the visual only; the logical position
@@ -304,40 +268,72 @@ export function Player({ onAvatarReady }) {
       const steppingUp = player.grounded && pos.y > shownY
       const y = steppingUp ? shownY + (pos.y - shownY) * Math.min(1, delta * 18) : pos.y
       _pivot.set(pos.x, y + BODY.pivot, pos.z)
-      if (pulling) {
-        // Walked back from the posts (south, +Z: you face down the runway), gripping them;
-        // at full stretch the rubber twangs and rocks you to and fro.
-        const back = pos.z - LAUNCH_STAND.z
-        if (launch.full) _pivot.z += (1 - launch.charge) * 0.35
-        motion.grip = GRIP.ahead + back + (launch.full ? (1 - launch.charge) * 0.35 : 0)
-        motion.strain = Math.min(1, back / maxPull)
-      }
+      if (blowingBig) motion.charge = launch.charge
       if (visual) {
         _targetQuat.setFromAxisAngle(_up, player.yaw)
-        visual.quaternion.slerp(_targetQuat, pulling ? 1 : 1 - Math.pow(0.0005, delta))
+        visual.quaternion.slerp(_targetQuat, blowingBig ? 1 : 1 - Math.pow(0.0005, delta))
       }
     }
     if (group && visual) {
-      // The body turns and dives about its middle: the group sits under the middle, and
-      // the visual is offset so that point stays put whichever way it's turned.
+      // The body turns about its middle: the group sits under the middle, and the visual
+      // is offset so that point stays put whichever way it's turned.
       group.position.set(_pivot.x, _pivot.y - BODY.pivot, _pivot.z)
       _hip.set(0, BODY.pivot, 0).applyQuaternion(visual.quaternion)
       visual.position.set(-_hip.x, BODY.pivot - _hip.y, -_hip.z)
     }
-    shownAt.set(_pivot.x, roll.active ? _pivot.y - 0.4 : pos.y, _pivot.z)
+    if (roll.active) {
+      // The shadow is the bubble's, on the ground under it - gone once it's popped.
+      shownAt.set(roll.bubblePos.x, 0, roll.bubblePos.z)
+      if (casterRef.current) casterRef.current.size = roll.popped ? 1.1 : 4
+    } else {
+      shownAt.set(_pivot.x, pos.y, _pivot.z)
+      if (casterRef.current) casterRef.current.size = 1.1
+    }
 
     // --- Publish motion ---------------------------------------------------------
     player.speed = speed
-    player.anim = !player.grounded ? 'jump' : pulling ? 'pull' : training ? 'run' : speed > 0.5 ? 'walk' : 'idle'
+    player.anim = !player.grounded ? 'jump' : blowingBig ? 'pull' : training ? 'run' : speed > 0.5 ? 'walk' : 'idle'
+
+    // A tap of BLOW anywhere: the wand comes up for a moment (standing still, it's
+    // blown through; walking, it's carried).
+    const taps = takeTapPuffs()
+    if (taps > 0) lastTapAt.value = now
+    const tapping = now - lastTapAt.value < 700 && speed < 0.5 && player.grounded && !still
 
     motion.speed = speed
     motion.grounded = player.grounded
     motion.vy = vy.current
-    // Under a bar: rubber-arm pull-ups (playerPose, `run`), a rep per gain.
-    motion.run = training ? 1 : 0
-    // Each bar is higher than the last: the arms stretch up to this one.
-    motion.barY = training ? padBarHeight(pad) : undefined
-    motion.stride += delta * (training ? RUN_CADENCE : 5 + 6 * Math.min(1, speed / WALK_SPEED))
+    // On a Blow Pad (or tapping BLOW): blowing bubbles (playerPose `run`), a puff per gain.
+    motion.run = training || tapping ? 1 : 0
+    motion.stride += delta * (training || tapping ? RUN_CADENCE : 5 + 6 * Math.min(1, speed / WALK_SPEED))
+
+    // --- The wand, and the little bubbles it blows ---------------------------------
+    if (wand) {
+      const up = !roll.active && (holdsWand(motion) || now - lastTapAt.value < 900)
+      wand.visible = up
+      if (up) {
+        if (wand.userData.bubbleId !== profile.equippedTire) {
+          wand.userData.bubbleId = profile.equippedTire
+          setBubbleLook(wand.userData.film, profile.equippedTire)
+        }
+        // On a pad, every breath out sends a stream of bubbles off the wand and through the
+        // pad's giant hoop (and every tap of BLOW sends more); a tap anywhere else, a puff.
+        const puff = Math.floor((motion.stride + Math.PI * 0.6) / (Math.PI * 2))
+        const low = !getQuality().particles
+        const stream = training && puff !== lastPuff.current ? (low ? 3 : 6) : 0
+        const tapped = taps * (training ? (low ? 3 : 5) : low ? 2 : 3)
+        lastPuff.current = puff
+        if (stream + tapped > 0) {
+          wand.updateWorldMatrix(true, false)
+          _ring.copy(WAND_RING).applyMatrix4(wand.matrixWorld)
+          const color = _c.copy(tireGlow(profile.equippedTire)).getHex()
+          const fx = Math.sin(player.yaw)
+          const fz = Math.cos(player.yaw)
+          if (stream) emitPuffs(_ring.x, _ring.y, _ring.z, fx, fz, stream, color, PUFF_STREAM)
+          if (tapped) emitPuffs(_ring.x, _ring.y, _ring.z, fx, fz, tapped, color, training ? PUFF_STREAM : PUFF_TAP)
+        }
+      }
+    }
   })
 
   return (
@@ -345,12 +341,16 @@ export function Player({ onAvatarReady }) {
       <group ref={visualRef}>
         <ErrorBoundary fallback={<FallbackAvatar motionRef={motionRef} onReady={onAvatarReady} />}>
           <Suspense fallback={<FallbackAvatar motionRef={motionRef} />}>
-            <PlayerAvatar onReady={onAvatarReady} targetHeight={PLAYER_HEIGHT} motionRef={motionRef} />
+            <PlayerAvatar onReady={onAvatarReady} targetHeight={PLAYER_HEIGHT} motionRef={motionRef} handRef={wandRef} />
           </Suspense>
         </ErrorBoundary>
+        <Wand ref={wandRef} />
       </group>
     </group>
   )
 }
+
+/** When you last tapped BLOW (performance.now()): the wand stays up a moment after. */
+const lastTapAt = { value: -Infinity }
 
 export default Player

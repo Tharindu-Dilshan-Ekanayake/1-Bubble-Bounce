@@ -29,7 +29,7 @@ import { normalizeProfile } from '../../shared/logic.js'
  *   before it is applied, so it lands exactly once however many pods look at it.
  */
 
-const DB_PATH = process.env.DB_PATH || fileURLToPath(new URL('../data/tire.db', import.meta.url))
+const DB_PATH = process.env.DB_PATH || fileURLToPath(new URL('../data/bubble.db', import.meta.url))
 
 const BOARDS = { rebirths: 'rebirths', wins: 'totalWins', distance: 'bestDistance', playtime: 'playtime' }
 

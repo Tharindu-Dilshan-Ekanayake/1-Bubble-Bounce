@@ -34,7 +34,7 @@ function usePrompt() {
     const world = WORLD_PORTALS[atPortal]
     if (inWorld === 1) return { title: WORLDS[0].name, action: 'Step out and back in to go home', run: null }
     if (unlocked || (rebirths >= world.rebirths && wins >= world.wins)) {
-      return { title: world.name, action: `x${WORLDS[1].wins} Wins on every launch!`, run: null }
+      return { title: world.name, action: `x${WORLDS[1].wins} Wins on every bounce!`, run: null }
     }
     if (rebirths < world.rebirths) return { title: world.name, action: `Needs ${world.rebirths} Rebirths (you have ${rebirths})`, run: null }
     return { title: world.name, action: `Needs ${formatNumber(world.wins)} Wins (you have ${formatNumber(wins)})`, run: null }
@@ -46,7 +46,7 @@ function usePrompt() {
 
   if (padLocked) {
     const pad = PADS[padNear]
-    const title = `${pad.name} - ${formatNumber(pad.mult)}x Power`
+    const title = `${pad.name} - ${formatNumber(pad.mult)}x Breath`
     if (pad.product) {
       return { title, action: `Unlock - ${formatNumber(SHOP[pad.product].price)} Wins`, run: () => buy(pad.product) }
     }
@@ -65,7 +65,7 @@ function usePrompt() {
 
   if (stand >= 0) {
     const tire = TIRES[stand]
-    const title = `${tire.name} - +${formatNumber(tire.power)} Power`
+    const title = `${tire.name} - +${formatNumber(tire.power)} Breath`
     const state = standState({ ownedTires: owned, equippedTire: equipped }, stand)
     if (state === 'equipped') return { title, action: 'Equipped', run: null }
     if (state === 'owned') return { title, action: 'Equip', run: () => actions.equipTire(tire.id) }

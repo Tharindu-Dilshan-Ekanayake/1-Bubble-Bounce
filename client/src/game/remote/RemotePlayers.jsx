@@ -3,10 +3,8 @@ import { useEffect, useMemo, useRef } from 'react'
 import { Color, Matrix4, Quaternion, Vector3 } from 'three'
 
 import { ROLL_RECOVERY } from '@shared/balance'
-import { levelCap } from '@shared/balance'
 import { PAD_YAW } from '@shared/world'
 
-import { armGrowth } from '../armStyles'
 
 import { remotePlayers } from '../../net/remotePlayers'
 import { getQuality } from '../../store/quality'
@@ -133,10 +131,10 @@ function writeNameplate(plate, name, at, distance, maxDistance, camera, size, ui
  * Everyone else in the lobby: blocky avatars (one InstancedMesh for every limb of every
  * player), name tags and their pets (handed to the shared pet renderer). Also works out,
  * once a frame for everyone, what the real avatars (RemoteAvatars) need: each launch
- * replayed down the runway (`r.flying`, `r.flight`: the same path.rideState yours
- * follows). Stretching back on the launch posts they're where the network says they've
- * walked back to (anim 'pull'). On a pull-up bar they do pull-ups. Hidden past the
- * preset's draw distance.
+ * replayed down the valley (`r.flying`, `r.flight`: the same path.rideState yours
+ * follows; their bubble is BubbleRiders'). Blowing their bubble in the Blow Zone (anim
+ * 'pull') they stand facing the valley, wand up. On a Blow Pad they blow bubbles. Hidden
+ * past the preset's draw distance.
  */
 export function RemotePlayers() {
   const camera = useThree((s) => s.camera)
@@ -188,7 +186,7 @@ export function RemotePlayers() {
         }
       }
       r.pulling = r.anim === 'pull' && !r.flying
-      if (r.flying) r.shadow.position.set(r.flight.position.x, r.flight.position.y - 0.4, r.flight.position.z)
+      if (r.flying) r.shadow.position.set(r.flight.bubblePos.x, 0, r.flight.bubblePos.z)
       else r.shadow.position.copy(r.position)
 
       // --- In the lobby -----------------------------------------------------------
@@ -200,28 +198,24 @@ export function RemotePlayers() {
 
       // Players drawn as their real avatar (RemoteAvatars) skip the blocky figure.
       if (visible && !r.fullAvatar && r.flying && instance + PARTS <= MAX_REMOTES * PARTS) {
-        // Flying flat like a superhero, arms out ahead (or sprawled, or up cheering).
+        // Floating in their bubble, arms out and up (or up cheering once it's popped).
         const st = r.flight
         flierTurn(st, _flyQ)
         _base.compose(st.position, _flyQ, _s.set(1, 1, 1)).multiply(_hipDown)
-        const arms = st.cheer > 0.5 ? -2.7 + Math.sin(t * 10) * 0.3 : st.sprawl > 0.5 ? -2.3 : st.grip >= 0 ? -1.4 : -3
-        instance = writeFigure(body, instance, r, _base, 0, arms, st.fly > 0 ? 1.5 : 1)
+        const arms = st.cheer > 0.5 ? -2.7 + Math.sin(t * 10) * 0.3 : -2.2 + Math.sin(t * 3) * 0.2
+        instance = writeFigure(body, instance, r, _base, 0, arms, 1)
       } else if (visible && !r.fullAvatar && instance + PARTS <= MAX_REMOTES * PARTS) {
         const walking = !running && r.speed > 0.6
         if (walking) r.walkPhase += delta * (6 + Math.min(r.speed, 10) * 0.5)
-        // Pull-ups on a bar: arms up, stretching long and snapping short each rep.
+        // Blowing on a pad: the wand arm up in front, puffing.
         if (running) r.walkPhase += delta * RUN_CADENCE
         const swing = walking ? Math.sin(r.walkPhase) * 0.9 : 0
         const pulling = r.pulling
         _q.setFromAxisAngle(_up, running ? PAD_YAW : pulling ? Math.PI : r.yaw)
         _base.compose(r.position, _q, _s.set(1, 1, 1))
-        const rep = running ? 0.5 - 0.5 * Math.cos(r.walkPhase) : 0
-        // Otherwise their rubber arms reach the floor, dragging behind as they walk.
-        const drag = 0.15 + (walking ? 0.45 + Math.sin(r.walkPhase) * 0.25 : 0)
-        const arms = running ? Math.PI : pulling ? -1.45 : drag
-        const grow = armGrowth(r.tireId, r.level, levelCap(r.rebirths || 0))
-        const stretch = running ? 1.7 - rep * 0.7 : pulling ? 3 : 1.1 + (Math.min(3, 1.95 / Math.max(0.3, Math.cos(drag))) - 1.1) * grow
-        instance = writeFigure(body, instance, r, _base, swing, arms, stretch)
+        const puff = running || pulling ? Math.sin(r.walkPhase) * 0.1 : 0
+        const arms = running || pulling ? -1.3 + puff : swing * 0.6
+        instance = writeFigure(body, instance, r, _base, swing, arms, 1)
       }
 
       // Name tag, just above the head (players are 1.8 tall).

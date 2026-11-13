@@ -1,13 +1,26 @@
-import { armBase, armTrail, ARM_STYLES } from './armStyles'
+import { Color } from 'three'
+
+import { BUBBLE_STYLES, bubbleStyle } from './bubbles'
 
 /**
- * Each pair of arms' colours, by arm id (the ids are the template's tire ids, kept for
- * saves; names and stats live in shared/balance.js, and how each pair of arms looks is
- * armStyles.js). Named for the template, so everything that tinted itself by your tire -
- * the flight's trail, the speed lines, the landing's glow, the stands - now takes your
- * arms' colours. `glow` is the trail colour; `rim` is the arms' base colour.
+ * Each bubble's colours, by bubble id (the ids are shared/balance.js TIRES - the
+ * template's "tires" are bubbles; how each one looks is bubbles.js). Named for the
+ * template, so everything that tinted itself by your tire - the bounce's trail, the
+ * speed lines, the landing's glow, the shop stands - takes your bubble's colours.
+ * `tireGlow` is the trail colour; `tireRim` is the bubble's body colour. Both are cached
+ * Colors: safe to read every frame.
  */
-export const TIRE_STYLES = ARM_STYLES
+export const TIRE_STYLES = BUBBLE_STYLES
 
-export const tireRim = (id) => armBase(id)
-export const tireGlow = (id) => armTrail(id)
+const parsed = new Map()
+function colorOf(hex) {
+  let c = parsed.get(hex)
+  if (!c) {
+    c = new Color(hex)
+    parsed.set(hex, c)
+  }
+  return c
+}
+
+export const tireRim = (id) => colorOf(bubbleStyle(id).a)
+export const tireGlow = (id) => colorOf(bubbleStyle(id).trail)

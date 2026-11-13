@@ -21,7 +21,7 @@ const DEFAULTS = {
   staticUrl: 'https://static.bloxity.io',
 }
 
-const GAME_FALLBACK = '1-arm-length'
+const GAME_FALLBACK = '1-bubble-bounce'
 
 /** 'https://x.io/' -> 'https://x.io', so paths can be appended with a single '/'. */
 const trimUrl = (url) => String(url).replace(/\/+$/, '')
