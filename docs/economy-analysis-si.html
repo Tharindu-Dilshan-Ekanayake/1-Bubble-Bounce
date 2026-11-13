@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>+1 Kick Field Goal – Wins, මිල ගණන් සහ ප්ලේයර්ලා හිරවෙන තැන්</title>
+<style>
+  body { font-family: "Iskoola Pota", "Noto Sans Sinhala", system-ui, sans-serif; max-width: 980px; margin: 0 auto; padding: 24px; line-height: 1.7; color: #1d2433; background: #f6f8fb; }
+  h1 { font-size: 1.7em; margin-bottom: 0.2em; }
+  h2 { margin-top: 2em; border-bottom: 3px solid #2f6bff; padding-bottom: 4px; }
+  h3 { margin-top: 1.4em; }
+  .note { background: #fff7e0; border-left: 5px solid #ffb21e; padding: 10px 14px; border-radius: 6px; }
+  .warn { background: #ffecec; border-left: 5px solid #e5394a; padding: 10px 14px; border-radius: 6px; }
+  .good { background: #e8fbea; border-left: 5px solid #2fb44a; padding: 10px 14px; border-radius: 6px; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0 18px; background: #fff; font-size: 0.93em; }
+  th, td { border: 1px solid #d5dbe6; padding: 5px 8px; text-align: left; vertical-align: top; }
+  th { background: #e9efff; }
+  td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .high { color: #c4122f; font-weight: bold; }
+  .mid { color: #c27a00; font-weight: bold; }
+  .low { color: #1f8f36; font-weight: bold; }
+  code { background: #eef1f6; padding: 1px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<h1>+1 Kick Field Goal – Wins, මිල ගණන් සහ ප්ලේයර්ලා හිරවෙන තැන්</h1>
+<p>2026-11-03 · ගේම් එකේ ඇත්ත balance එකෙන් ගණනය කළ විශ්ලේෂණය</p>
+
+<div class="note">
+<b>මේ ගණන් ආවේ කොහෙන්ද?</b><br>
+• මිල ගණන්, Wins, Power සියල්ල ගේම් එකේ ඇත්ත ෆයිල් වලින්: <code>shared/balance.js</code> (ගණන්) සහ <code>shared/logic.js</code> (නීති).<br>
+• "කාලය" කියන ඒවා <code>scripts/balance-sim.mjs</code> simulation එකෙන්. ඒක හිතන්නේ <b>නොනවත්වා, හොඳට සෙල්ලම් කරන free player කෙනෙක්</b> ගැන – potions, daily rewards, Robux/Gems නැතුව, හොඳම දේ මුලින්ම ගන්නවා.<br>
+• ඇත්ත ප්ලේයර්ලා මීට වඩා සෙමින් යනවා (විවේක, වැරදි තීරණ). ඒ නිසා <b>ඇත්ත කාලය simulation කාලය වගේ 1.5 – 3 ගුණයක්</b> කියලා ගන්න.<br>
+• "කොච්චර වෙලාවකින් අස්වෙයිද" කියන කොටස <b>ඇස්තමේන්තුවක්</b> – ඇත්ත retention data නැහැ. ගේම් එක publish කරලා analytics වලින් තහවුරු කරගන්න ඕනේ.
+</div>
+
+<div class="good">
+<b>යාවත්කාලීන කිරීම (2026-11-03): Palm Beach (World 2)</b><br>
+• Portal එක open වෙන්නේ <b>Rebirth 8 + Wins 1M</b> තියෙනකොට (කලින් Wins 25K). Simulation එකේ ~මිනිත්තු 38දී.<br>
+• Palm Beach එකේ විතරක්: <b>Beach Egg</b> (Wins 2M – Seagull x16 45%, Dolphin x22 30%, Shark x32 20%, Kraken x55 5%; Kraken තමයි ගේම් එකේ හොඳම pet එක), <b>Surf Treadmill x115</b> (Rebirth 10), <b>Tsunami Treadmill x130</b> (Rebirth 16), <b>Secret Star</b> (leaderboards පිටිපස්සේ හංගලා – හම්බුනාම හැම world එකකම x2 Power සදහටම).<br>
+• Meter grades: WEAK x0.5–0.6 දුර / x0.75 Wins, GOOD x0.8–0.9 / x1, GREAT x1.1–1.2 / x1.25, PERFECT x1.4–1.5 / x1.6.<br>
+• අලුත් pacing (sim, star හම්බුනාම): R20 1:21, R25 2:17, R30 <b>5:48</b> (කලින් 12:44), Infinity Football <b>5:58</b> (කලින් 13:16). Star එක හම්බුනේ නැත්නම් R30 9:00. ඇත්ත ප්ලේයර්ලාට මුළු ගේම් එක ~පැය 9 – 18.<br>
+• පහළ කොටස්වල තියෙන "කාලය" අගයන් Palm Beach වලට කලින් ඒවා; ලොකු වෙනස තියෙන්නේ R20න් පස්සේ.
+</div>
+
+<h2>1. කෙටි සාරාංශය</h2>
+<ul>
+  <li class="low">පළමු මිනිත්තුව හොඳයි: තත්පර 18න් Power 30 → පළමු kick එක yd 298 → Wins ~27 (stage prizes එක්ක). එකපාරම Soccer Ball (1) + Tennis Ball (15) ගන්න පුළුවන්.</li>
+  <li class="low">වැඩිම විනෝදය මිනිත්තු 5 – 40 අතර: හැම මිනිත්තු 2–5කට අලුත් දෙයක් (ball, rebirth, treadmill, egg, World 2).</li>
+  <li class="high">පළමු ලොකු අවදානම ~මිනිත්තු 5: Level 15 (Power 2.3K) cap එකට ආවම treadmill එකෙන් Power එන එක නවතිනවා. Rebirth කරන්න ඕනේ කියලා tutorial එකේ කියන්නේ නෑ (tutorial එක ball එක ගත්තම ඉවරයි).</li>
+  <li class="mid">එකතු කරන්න තියෙන දේවල් ඉක්මනට ඉවරයි: අලුත් egg නැහැ ~මිනිත්තු 27න් පස්සේ, අලුත් treadmill නැහැ ~37න් පස්සේ, අලුත් world නැහැ ~24න් පස්සේ.</li>
+  <li class="high">ලොකු බිත්තිය පැය 2.5 – 4: Galaxy Football (2:40) → Dragon Football (4:11) අතර පැය 1.5ක්; rebirth එකකට මිනිත්තු 30 – 60.</li>
+  <li class="high">ගේම් එක "ඉවර" වෙන තැන ~පැය 13: අන්තිම ball එක (Infinity Football). ඊට පස්සේ rebirth එකකට පැය 4 – 8+, අලුත් දෙයක් නැහැ.</li>
+  <li class="mid">අගට kick කරන එක අඩු වෙනවා: පැය 40ක simulation එකේ kicks 463යි – වැඩි කාලයක් treadmill එකේ. ගේම් එකේ විනෝදම කොටස (kick එක) අගට නැති වෙනවා.</li>
+</ul>
+
+<h2>2. ප්ලේයර්ලා හිරවෙන තැන් (කාලය අනුව)</h2>
+<table>
+<tr><th>කාලය (sim)</th><th>මොකද වෙන්නේ</th><th>අවදානම</th><th>ඇයි / විස්තරය</th></tr>
+<tr><td>0 – 1 min</td><td>Tutorial: treadmill → kick → Soccer Ball</td><td class="low">අඩුයි</td><td>Power 30ට තත්පර 18යි. පළමු kick එක stage 3ක් පනිනවා (Backyard → Palm Beach), Wins 27ක් ලැබෙනවා. හොඳ ආරම්භයක්.</td></tr>
+<tr><td>~5 min</td><td>පළමු Rebirth (Level 15, Power 2.3K)</td><td class="high">ඉහළයි</td><td>Max level එකේදී treadmill එකෙන් Power 0යි. Rebirth බොත්තම/panel එක හොයාගන්නේ නැති අලුත් ප්ලේයර් කෙනෙක් "ගේම් එක හිර වුණා" කියලා හිතලා අස්වෙන්න පුළුවන්. Tutorial එකේ Rebirth පියවරක් නැහැ.</td></tr>
+<tr><td>5 – 25 min</td><td>Rebirth හැම මිනිත්තු 3.5–4කට, balls, passes, eggs</td><td class="low">අඩුයි</td><td>Speed (R1), Turbo (R2), Nitro (R4), Rocket (R6) treadmills; Auto Kick (8 min), x2 Power (13 min), x2 Wins (23 min).</td></tr>
+<tr><td>~38 min</td><td>Palm Beach (Rebirth 8 + Wins 1M, Wins වියදම් වෙන්නේ නෑ)</td><td class="low">අඩුයි</td><td>x3 Wins, Beach Egg, beach treadmills 2ක්, Secret Star. (යාවත්කාලීන කිරීම බලන්න.)</td></tr>
+<tr><td>25 – 40 min</td><td>හොඳම egg (Volcano 35K), Diamond/Galaxy treadmills</td><td class="mid">මධ්‍යම</td><td>~27 minන් පස්සේ අලුත් egg එකක් නැහැ; pets x56 – x95 දක්වා යන්නේ rebirth gift eggs වලින් විතරයි. 37 minන් පස්සේ treadmills සියල්ල ඉවරයි. "එකතු කරන" ඉලක්ක ඉක්මනට නැති වෙනවා.</td></tr>
+<tr><td>40 min – 2 h</td><td>Ball එකක් හැම 8 – 26 min, rebirth 5 – 15 min</td><td class="mid">මධ්‍යම</td><td>සාමාන්‍ය ප්ලේයර් කෙනෙක්ගේ session එකක් සාමාන්‍යයෙන් මෙතන ඉවර වෙනවා. Daily rewards (දින 7), playtime rewards (90 min දක්වා), offline training (25%, පැය 8) ආපහු එන්න හේතු.</td></tr>
+<tr><td>2.5 – 4 h</td><td>Galaxy → Dragon Football: පැය 1.5; rebirth 25 – 60 min</td><td class="high">ඉහළයි</td><td>Pets/eggs/treadmills/worlds සියල්ල ඉවරයි, balls සහ rebirths විතරයි ඉතුරු. Progress එක හෙමින් – කම්මැලි වෙන තැන.</td></tr>
+<tr><td>4 – 13 h</td><td>Cosmic (7:00), Infinity (13:16); rebirth පැය 1 – 4</td><td class="high">ඉතා ඉහළ</td><td>බොහෝ දෙනා මෙතනින් එහාට යන්නේ නැහැ.</td></tr>
+<tr><td>13 h +</td><td>Balls 24ම ඉවරයි; R31 (16:32), R32 (24:29), R33 පැය 16+ පස්සෙත් නැහැ</td><td class="high">ගේම් එක ඉවරයි</td><td>Rebirth එකකට Power cap එක ~x2.5 ගුණයක් වැඩි වෙනවා, ඒත් rebirth multiplier එක +1ක් විතරයි (x31 → x32). Ball/pet අලුත් දෙයක් නැති නිසා rebirth කාලය දෙගුණ, තුන්ගුණ වෙනවා.</td></tr>
+</table>
+
+<h3>2.1 අගට kick කරන එක නැති වෙන හැටි</h3>
+<p>Kick එකකින් ලැබෙන Power = ball එකේ power × multipliers, තත්පරයකට එක පාරක් (බෝලය පියාඹන තත්පර ~15–21). Treadmill එකේ ඒකම <b>x100 (Galaxy)</b> වලින්, තත්පර 0.6කට වතාවක්. ඒ නිසා අගට kick කරන එක Power වලට වැඩක් නැහැ – ප්ලේයර්ලා treadmill එකේ AFK ඉන්නවා. Reference ගේම් එකේ "every kick trains you too, kicks through the posts train 3x" – ඒක නිසා එතන ප්ලේයර්ලා දිගටම kick කරනවා.</p>
+
+<h2>3. කොච්චර වෙලාවකින් අස්වෙයිද? (ඇස්තමේන්තුව)</h2>
+<table>
+<tr><th>ප්ලේයර් වර්ගය</th><th>පළමු session එක</th><th>නවතින තැන</th></tr>
+<tr><td>අලුත්, ගේම් එක තේරෙන්නේ නැති</td><td>මිනිත්තු 5 – 10</td><td>Level 15 cap එක (Rebirth තේරෙන්නේ නැත්නම්)</td></tr>
+<tr><td>සාමාන්‍ය (දවසට 30 – 60 min)</td><td>මිනිත්තු 30 – 60</td><td>මුළු කාලය පැය 3 – 6 (sim පැය 2.5 – 4 × 1.5) ≈ දින 4 – 10. Dragon Football බිත්තිය.</td></tr>
+<tr><td>Hardcore / AFK</td><td>පැය 1 – 3</td><td>Infinity Football: මුළු කාලය පැය ~20 – 40 ≈ සති 2 – 4. ඊට පස්සේ update එකක් නැත්නම් අස්වෙනවා.</td></tr>
+</table>
+<p class="note">මේවා simulation එකේ වේගයෙන් ගණනය කරපු ඇස්තමේන්තු. ඇත්ත අගයන් (D1/D7 retention, session length) ගේම් එක publish කරාට පස්සේ analytics වලින් බලන්න ඕනේ.</p>
+
+<h2>4. සියලු ගණන් (Wins, මිල, Power)</h2>
+
+<h3>4.1 Balls (Wins වලින් ගන්නේ, පිළිවෙලට)</h3>
+<p>"+Power" = treadmill එකේ එක step එකකින් ලැබෙන Power (multipliers වලට කලින්). Ball එකකින් ball එකට power ~x2.6, මිල ~x2.8 – x3.3.</p>
+<table>
+<tr><th>#</th><th>Ball</th><th>Rarity</th><th>+Power</th><th>මිල (Wins)</th><th>ගන්න කාලය (sim)</th></tr>
+<tr><td>1</td><td>Rookie Football</td><td>Common</td><td class="n">1</td><td class="n">නොමිලේ</td><td class="n">0:00</td></tr>
+<tr><td>2</td><td>Soccer Ball</td><td>Common</td><td class="n">3</td><td class="n">1</td><td class="n">0:42</td></tr>
+<tr><td>3</td><td>Tennis Ball</td><td>Common</td><td class="n">5</td><td class="n">15</td><td class="n">0:42</td></tr>
+<tr><td>4</td><td>Basketball</td><td>Uncommon</td><td class="n">12</td><td class="n">75</td><td class="n">3:06</td></tr>
+<tr><td>5</td><td>Volleyball</td><td>Uncommon</td><td class="n">30</td><td class="n">300</td><td class="n">5:23</td></tr>
+<tr><td>6</td><td>Baseball</td><td>Rare</td><td class="n">75</td><td class="n">1.2K</td><td class="n">12:18</td></tr>
+<tr><td>7</td><td>Beach Ball</td><td>Rare</td><td class="n">200</td><td class="n">4.5K</td><td class="n">19:51</td></tr>
+<tr><td>8</td><td>Bowling Ball</td><td>Rare</td><td class="n">500</td><td class="n">16K</td><td class="n">22:13</td></tr>
+<tr><td>9</td><td>Rugby Ball</td><td>Epic</td><td class="n">1.25K</td><td class="n">55K</td><td class="n">24:41</td></tr>
+<tr><td>10</td><td>Golf Ball</td><td>Epic</td><td class="n">3.5K</td><td class="n">180K</td><td class="n">26:30</td></tr>
+<tr><td>11</td><td>Silver Football</td><td>Epic</td><td class="n">9K</td><td class="n">600K</td><td class="n">28:37</td></tr>
+<tr><td>12</td><td>Ice Ball</td><td>Epic</td><td class="n">23K</td><td class="n">2M</td><td class="n">31:22</td></tr>
+<tr><td>13</td><td>Golden Football</td><td>Legendary</td><td class="n">60K</td><td class="n">6M</td><td class="n">34:58</td></tr>
+<tr><td>14</td><td>Lava Ball</td><td>Legendary</td><td class="n">155K</td><td class="n">17M</td><td class="n">40:39</td></tr>
+<tr><td>15</td><td>Platinum Football</td><td>Legendary</td><td class="n">400K</td><td class="n">48M</td><td class="n">45:26</td></tr>
+<tr><td>16</td><td>Emerald Football</td><td>Legendary</td><td class="n">1.05M</td><td class="n">135M</td><td class="n">53:15</td></tr>
+<tr><td>17</td><td>Ruby Football</td><td>Mythic</td><td class="n">2.7M</td><td class="n">380M</td><td class="n">1:00:58</td></tr>
+<tr><td>18</td><td>Diamond Football</td><td>Mythic</td><td class="n">7M</td><td class="n">1.05B</td><td class="n">1:14:28</td></tr>
+<tr><td>19</td><td>Rainbow Football</td><td>Mythic</td><td class="n">18M</td><td class="n">3B</td><td class="n">1:31:57</td></tr>
+<tr><td>20</td><td>Unicorn Ball</td><td>Mythic</td><td class="n">48M</td><td class="n">8.5B</td><td class="n">1:58:07</td></tr>
+<tr><td>21</td><td>Galaxy Football</td><td>Secret</td><td class="n">125M</td><td class="n">24B</td><td class="n">2:40:13</td></tr>
+<tr><td>22</td><td>Dragon Football</td><td>Secret</td><td class="n">330M</td><td class="n">68B</td><td class="n high">4:11:40</td></tr>
+<tr><td>23</td><td>Cosmic Football</td><td>Secret</td><td class="n">860M</td><td class="n">190B</td><td class="n high">7:00:31</td></tr>
+<tr><td>24</td><td>Infinity Football</td><td>Secret</td><td class="n">2.2B</td><td class="n">540B</td><td class="n high">13:16:48</td></tr>
+</table>
+
+<h3>4.2 Rebirth: level cap, Power, Wins එක kick එකකට</h3>
+<p>"Wins / kick" = max level එකේදී එක kick එකකින් (x2 Wins pass, meter grade bonus, potions නැතුව - Auto Kick එකක් වගේ x1). World 2 එකේ x3. "Skip මිල" = max level නැතුවම rebirth කරන්න Wins (max kick 10ක මිල).</p>
+<table>
+<tr><th>Rebirth</th><th>Level cap</th><th>Cap එකට Power</th><th>Power multiplier</th><th>Max kick (yd)</th><th>Wins/kick World 1</th><th>World 2</th><th>Skip මිල</th><th>එන කාලය (sim)</th><th>කලින් එකේ ඉඳන්</th></tr>
+<tr><td>R0</td><td class="n">15</td><td class="n">2.3K</td><td class="n">x1</td><td class="n">1,124</td><td class="n">70</td><td class="n">208</td><td class="n">700</td><td class="n">0:00</td><td class="n">–</td></tr>
+<tr><td>R1</td><td class="n">23</td><td class="n">16K</td><td class="n">x2</td><td class="n">1,563</td><td class="n">211</td><td class="n">637</td><td class="n">2.1K</td><td class="n">0:05:23</td><td class="n">5:23</td></tr>
+<tr><td>R2</td><td class="n">31</td><td class="n">100K</td><td class="n">x3</td><td class="n">2,009</td><td class="n">532</td><td class="n">1.6K</td><td class="n">5.3K</td><td class="n">0:08:56</td><td class="n">3:32</td></tr>
+<tr><td>R3</td><td class="n">39</td><td class="n">600K</td><td class="n">x4</td><td class="n">2,475</td><td class="n">1.3K</td><td class="n">4K</td><td class="n">14K</td><td class="n">0:13:07</td><td class="n">4:10</td></tr>
+<tr><td>R4</td><td class="n">47</td><td class="n">3.2M</td><td class="n">x5</td><td class="n">2,938</td><td class="n">3.2K</td><td class="n">9.8K</td><td class="n">33K</td><td class="n">0:16:36</td><td class="n">3:29</td></tr>
+<tr><td>R5</td><td class="n">55</td><td class="n">16M</td><td class="n">x6</td><td class="n">3,405</td><td class="n">7.5K</td><td class="n">22K</td><td class="n">75K</td><td class="n">0:20:42</td><td class="n">4:05</td></tr>
+<tr><td>R6</td><td class="n">63</td><td class="n">78M</td><td class="n">x7</td><td class="n">3,892</td><td class="n">16K</td><td class="n">50K</td><td class="n">170K</td><td class="n">0:24:41</td><td class="n">3:59</td></tr>
+<tr><td>R8</td><td class="n">79</td><td class="n">1.5B</td><td class="n">x9</td><td class="n">4,849</td><td class="n">74K</td><td class="n">224K</td><td class="n">750K</td><td class="n">0:29:31</td><td class="n">2:25</td></tr>
+<tr><td>R10</td><td class="n">95</td><td class="n">23B</td><td class="n">x11</td><td class="n">5,790</td><td class="n">283K</td><td class="n">850K</td><td class="n">2.8M</td><td class="n">0:34:58</td><td class="n">2:59</td></tr>
+<tr><td>R12</td><td class="n">111</td><td class="n">310B</td><td class="n">x13</td><td class="n">6,744</td><td class="n">1M</td><td class="n">3.1M</td><td class="n">11M</td><td class="n">0:41:35</td><td class="n">3:35</td></tr>
+<tr><td>R15</td><td class="n">135</td><td class="n">11T</td><td class="n">x16</td><td class="n">8,126</td><td class="n">6.4M</td><td class="n">19M</td><td class="n">65M</td><td class="n">0:55:22</td><td class="n">5:24</td></tr>
+<tr><td>R18</td><td class="n">159</td><td class="n">300T</td><td class="n">x19</td><td class="n">9,488</td><td class="n">33M</td><td class="n">99M</td><td class="n">330M</td><td class="n">1:15:27</td><td class="n">8:16</td></tr>
+<tr><td>R20</td><td class="n">175</td><td class="n">2.3Qa</td><td class="n">x21</td><td class="n">10,352</td><td class="n">87M</td><td class="n">261M</td><td class="n">870M</td><td class="n">1:34:52</td><td class="n">10:58</td></tr>
+<tr><td>R22</td><td class="n">191</td><td class="n">17Qa</td><td class="n">x23</td><td class="n">11,230</td><td class="n">231M</td><td class="n">695M</td><td class="n">2.3B</td><td class="n">2:00:37</td><td class="n">15:15</td></tr>
+<tr><td>R25</td><td class="n">215</td><td class="n">300Qa</td><td class="n">x26</td><td class="n">12,541</td><td class="n">979M</td><td class="n">2.9B</td><td class="n">9.8B</td><td class="n">3:13:31</td><td class="n mid">29:42</td></tr>
+<tr><td>R28</td><td class="n">239</td><td class="n">4.5Qi</td><td class="n">x29</td><td class="n">13,820</td><td class="n">3.7B</td><td class="n">11B</td><td class="n">37B</td><td class="n">7:01:12</td><td class="n high">1:54:12</td></tr>
+<tr><td>R30</td><td class="n">255</td><td class="n">26Qi</td><td class="n">x31</td><td class="n">14,658</td><td class="n">8.6B</td><td class="n">25B</td><td class="n">87B</td><td class="n">12:44:00</td><td class="n high">3:56:39</td></tr>
+<tr><td>R32</td><td class="n">271</td><td class="n">140Qi</td><td class="n">x33</td><td class="n">15,477</td><td class="n">19B</td><td class="n">58B</td><td class="n">190B</td><td class="n">24:29:41</td><td class="n high">7:56:53</td></tr>
+</table>
+<p>Rebirth gifts: R15, R20, R25… (හැම 5කට) Volcano Eggs 3 – 6ක්.</p>
+
+<h3>4.3 Treadmills</h3>
+<table>
+<tr><th>Treadmill</th><th>Power multiplier</th><th>Unlock කරන්නේ</th><th>කාලය (sim)</th></tr>
+<tr><td>Starter Treadmill</td><td class="n">x1</td><td>නොමිලේ</td><td class="n">0:00</td></tr>
+<tr><td>Speed Treadmill</td><td class="n">x2</td><td>Rebirth 1</td><td class="n">0:05</td></tr>
+<tr><td>Turbo Treadmill</td><td class="n">x4</td><td>Rebirth 2</td><td class="n">0:09</td></tr>
+<tr><td>Nitro Treadmill</td><td class="n">x10</td><td>Rebirth 4</td><td class="n">0:17</td></tr>
+<tr><td>Rocket Treadmill</td><td class="n">x20</td><td>Rebirth 6</td><td class="n">0:25</td></tr>
+<tr><td>Diamond Treadmill (VERY OP!)</td><td class="n">x40</td><td>150K Wins</td><td class="n">0:29</td></tr>
+<tr><td>Galaxy Treadmill (BEST OVERALL!)</td><td class="n">x100</td><td>2.5M Wins</td><td class="n">0:37</td></tr>
+</table>
+<p>Treadmill එකේ Power = ball power × treadmill multiplier × rebirth multiplier × pets × (x2 Power pass) × (x2 potion), තත්පර 0.6කට වතාවක්. Lobby එකේ ඇවිදිනකොට yd 8කට වතාවක් ball power විතරක්.</p>
+
+<h3>4.4 Eggs සහ Pets</h3>
+<p>Pets 3ක් equip කරන්න පුළුවන්; ඒවා <b>එකතු වෙනවා</b> (x3 + x2 = x4, x6 නෙවෙයි). Inventory 60යි. Multi-hatch = 3ක් එකපාර.</p>
+<table>
+<tr><th>Egg</th><th>මිල (Wins)</th><th>Pets (multiplier, අවස්ථාව)</th><th>සාමාන්‍ය</th></tr>
+<tr><td>Basic</td><td class="n">15</td><td>Cat x1.1 45%, Dog x1.15 30%, Bunny x1.25 20%, Bear x1.5 5%</td><td class="n">x1.17</td></tr>
+<tr><td>Grass</td><td class="n">120</td><td>Cow x1.4 45%, Parrot x1.7 30%, Fox x2.2 20%, Tiger x3 5%</td><td class="n">x1.73</td></tr>
+<tr><td>Sunset</td><td class="n">750</td><td>Flamingo x2.5 45%, Turtle x3.2 30%, Owl x4.5 20%, Phoenix x7 5%</td><td class="n">x3.33</td></tr>
+<tr><td>Unicorn</td><td class="n">6K</td><td>Pony x5 50%, Unicorn x8 35%, Pegasus x13 15%</td><td class="n">x7.25</td></tr>
+<tr><td>Volcano</td><td class="n">35K</td><td>Salamander x10 50%, Fire Bird x16 30%, Magma Golem x26 15%, Inferno Wolf x45 5%</td><td class="n">x15.95</td></tr>
+<tr><td>Sphinx (limited stock)</td><td class="n">2.5M</td><td>Sphinx x80</td><td class="n">x80</td></tr>
+</table>
+<p class="warn">Volcano Egg එක 35K යි – ප්ලේයර් කෙනෙක් ~මිනිත්තු 25දී ගන්නවා. ඊට වඩා හොඳ egg එකක් නැහැ. Simulation එකේ pets x95ට ආවා; හොඳම විදිහ Inferno Wolf 3ක් = x133, Sphinx එක්ක x168. ඊට පස්සේ pets වලින් progress එකක් නැහැ.</p>
+
+<h3>4.5 Shop (Wins), Passes, World 2</h3>
+<table>
+<tr><th>දේ</th><th>මිල (Wins)</th><th>වර්ගය</th><th>ගන්න කාලය (sim)</th></tr>
+<tr><td>Auto Kick</td><td class="n">150</td><td>Pass (සදහටම)</td><td class="n">0:08</td></tr>
+<tr><td>x2 Power</td><td class="n">400</td><td>Pass</td><td class="n">0:13</td></tr>
+<tr><td>x2 Wins</td><td class="n">2.5K</td><td>Pass</td><td class="n">0:23</td></tr>
+<tr><td>VERY OP! Treadmill (x40)</td><td class="n">150K</td><td>Pass</td><td class="n">0:29</td></tr>
+<tr><td>BEST OVERALL! Treadmill (x100)</td><td class="n">2.5M</td><td>Pass</td><td class="n">0:37</td></tr>
+<tr><td>Sphinx pet</td><td class="n">2.5M</td><td>එක පාරක් (stock 1000)</td><td class="n">–</td></tr>
+<tr><td>Palm Beach portal</td><td class="n">Rebirth 8 + 1M (තියෙන්න ඕනේ විතරයි, වියදම් වෙන්නේ නැහැ)</td><td>x3 Wins</td><td class="n">0:38</td></tr>
+</table>
+<p><b>Robux / Gems products</b> (<code>GEM_PRODUCTS</code>): Pile of Wins (max kicks 10ක Wins), Mountain of Wins (max kicks 60), Potion Bundle (x2 Power 3 + x2 Wins 3), 3 Volcano Eggs, Auto Kick, x2 Power, x2 Wins, Galaxy Treadmill. මේවායේ <b>මිල code එකේ නැහැ</b> – Boxity catalog එකේ තමයි දාන්නේ. ඒ නිසා මට ඒ මිල ගණනය කරන්න බැහැ.</p>
+
+<h3>4.6 Stages (World 1, පළමු 20)</h3>
+<p>"Power ඕනේ" = ඒ stage එකට ball එක යවන්න අවම Power (PERFECT kick එකකින් x1.5 දුර). "Prize" = පළමු වතාවට යනකොට එක පාරක් ලැබෙන Wins. World 2 එකේ මේ සියල්ල x3.</p>
+<table>
+<tr><th>#</th><th>Stage</th><th>පටන් ගන්නේ (yd)</th><th>Power ඕනේ</th><th>Wins/yd</th><th>Prize</th></tr>
+<tr><td>0</td><td>Backyard</td><td class="n">0</td><td class="n">0</td><td class="n">0.006</td><td class="n">–</td></tr>
+<tr><td>1</td><td>High School</td><td class="n">100</td><td class="n">8</td><td class="n">0.0072</td><td class="n">5</td></tr>
+<tr><td>2</td><td>Cactus Desert</td><td class="n">200</td><td class="n">16</td><td class="n">0.0098</td><td class="n">7</td></tr>
+<tr><td>3</td><td>Palm Beach</td><td class="n">306</td><td class="n">32</td><td class="n">0.0135</td><td class="n">9</td></tr>
+<tr><td>4</td><td>Jungle Stadium</td><td class="n">418</td><td class="n">61</td><td class="n">0.0185</td><td class="n">13</td></tr>
+<tr><td>5</td><td>Frozen Tundra</td><td class="n">536</td><td class="n">115</td><td class="n">0.0255</td><td class="n">18</td></tr>
+<tr><td>6</td><td>College</td><td class="n">660</td><td class="n">231</td><td class="n">0.0351</td><td class="n">24</td></tr>
+<tr><td>7</td><td>Candy Bowl</td><td class="n">790</td><td class="n">454</td><td class="n">0.0486</td><td class="n">34</td></tr>
+<tr><td>8</td><td>Mushroom Bowl</td><td class="n">926</td><td class="n">923</td><td class="n">0.0673</td><td class="n">47</td></tr>
+<tr><td>9</td><td>Volcano</td><td class="n">1,068</td><td class="n">1.7K</td><td class="n">0.0934</td><td class="n">65</td></tr>
+<tr><td>10</td><td>Swamp Stadium</td><td class="n">1,216</td><td class="n">3.5K</td><td class="n">0.13</td><td class="n">90</td></tr>
+<tr><td>11</td><td>Crystal Dome</td><td class="n">1,370</td><td class="n">7K</td><td class="n">0.181</td><td class="n">130</td></tr>
+<tr><td>12</td><td>Coral Arena</td><td class="n">1,530</td><td class="n">13K</td><td class="n">0.253</td><td class="n">180</td></tr>
+<tr><td>13</td><td>Neon Stadium</td><td class="n">1,696</td><td class="n">28K</td><td class="n">0.355</td><td class="n">250</td></tr>
+<tr><td>14</td><td>Pro Stadium</td><td class="n">1,868</td><td class="n">57K</td><td class="n">0.498</td><td class="n">350</td></tr>
+<tr><td>15</td><td>Rainbow Bowl</td><td class="n">2,046</td><td class="n">115K</td><td class="n">0.7</td><td class="n">490</td></tr>
+<tr><td>16</td><td>The Moon</td><td class="n">2,230</td><td class="n">238K</td><td class="n">0.987</td><td class="n">690</td></tr>
+<tr><td>17</td><td>Aurora Arena</td><td class="n">2,420</td><td class="n">492K</td><td class="n">1.39</td><td class="n">970</td></tr>
+<tr><td>18</td><td>Championship</td><td class="n">2,616</td><td class="n">1M</td><td class="n">1.97</td><td class="n">1.4K</td></tr>
+<tr><td>19</td><td>Hall of Fame</td><td class="n">2,818</td><td class="n">2M</td><td class="n">2.8</td><td class="n">1.9K</td></tr>
+<tr><td>20</td><td>Green Hills</td><td class="n">3,026</td><td class="n">4.3M</td><td class="n">3.98</td><td class="n">2.8K</td></tr>
+</table>
+<p>Stages 60යි. අන්තිම stage එක yd 15,818දී, Power 269Qi ඕනේ. Trophies yd 40 සිට හැම yd 80කට (stage එකේ yd 80ක Wins වටිනාකම). Kick එකක් තත්පර ~15 – 21 (kick + පියාසැරිය + ප්‍රතිඵලය).</p>
+
+<h3>4.7 Timing meter (kick එක)</h3>
+<table>
+<tr><th>Grade</th><th>Meter එකේ මැද</th><th>දුර</th><th>Wins bonus</th></tr>
+<tr><td>PERFECT!</td><td>මැද 12%</td><td>x1.4 – x1.5</td><td>x1.6</td></tr>
+<tr><td>GREAT!</td><td>30%</td><td>x1.1 – x1.2</td><td>x1.25</td></tr>
+<tr><td>GOOD</td><td>60%</td><td>x0.8 – x0.9</td><td>x1</td></tr>
+<tr><td>WEAK KICK…</td><td>අනිත් හරිය</td><td>x0.5 – x0.6</td><td>x0.75</td></tr>
+<tr><td>Auto Kick</td><td>meter නැහැ</td><td>x1</td><td>x1</td></tr>
+</table>
+
+<h3>4.8 නොමිලේ ලැබෙන දේවල්</h3>
+<table>
+<tr><th>Daily (දින 7: හැම පැය 24කට එකක් open වෙනවා; දවසක් මග හැරුණත් reset වෙන්නේ නැහැ)</th><th>Playtime (එක session එකක)</th></tr>
+<tr><td>
+දවස 1: x2 Wins (5 min)<br>දවස 2: Dragon pet<br>දවස 3: x2 Power (5 min)<br>දවස 4: Unicorn Egg<br>දවස 5: x2 Power (5 min)<br>දවස 6: x2 Wins (5 min)<br>දවස 7: Volcano Egg
+</td><td>
+3 min: +10 Wins<br>8 min: x2 Power<br>15 min: Grass Egg<br>25 min: x2 Wins<br>35 min: +250 Wins<br>45 min: Sunset Egg<br>60 min: x2 Power<br>90 min: Unicorn Egg
+</td></tr>
+</table>
+<p>Offline training: අන්තිමට හිටපු treadmill එකේ වේගයෙන් 25%, පැය 8 දක්වා.</p>
+<p class="warn">සටහන: පැය 1කට පස්සේ playtime rewards (Grass/Sunset/Unicorn eggs, +10/+250 Wins) ඒ කාලේ ප්ලේයර්ට වටින්නේ නැහැ (එතකොට Wins/kick මිලියන ගාණක්). Daily rewards වලත් එහෙමයි.</p>
+
+<h2>5. හිරවෙන තැන් හදන්න නිර්දේශ (වැදගත්කම අනුව)</h2>
+<ol>
+  <li><b>Tutorial එකට Rebirth පියවරක්</b> (Level 15ට ආවම "Rebirth කරන්න!" ලොකු ඊතලයක්/popup එකක්). මිනිත්තු 5 අවදානම නැති කරනවා. <span class="low">ලේසියි</span></li>
+  <li><b>Kick එකෙනුත් Power</b> – reference එකේ වගේ: kick එකකට treadmill තත්පර කීපයක Power, goalposts මැදින් ගියොත් x3 ("FIELD GOAL x3"). අගටත් ප්ලේයර්ලා kick කරනවා, AFK අඩු වෙනවා. <span class="mid">මධ්‍යම</span></li>
+  <li><b>තවත් eggs</b> World 2 සහ ඊට පස්සේ: උදා. 1M, 100M, 10B, 1T Wins eggs (x30 – x500 pets). Pets progress එක පැය ගාණක් දිගු වෙනවා. <span class="low">ලේසියි (data විතරයි)</span></li>
+  <li><b>තවත් worlds</b> (reference: Palm Beach, Cactus Desert, Frozen Tundra, Volcano, The Moon, Mars). එක world එකක් ~පැය 1 – 2 වෙන්න portal Wins ගණන් දාන්න. <span class="mid">මධ්‍යම</span></li>
+  <li><b>අග rebirth බිත්තිය මෘදු කරන්න</b>: R25න් පස්සේ rebirth multiplier එක වේගයෙන් වැඩි කරන්න (උදා. R25+ එකකට +2 – +3), නැත්නම් Infinity Football එකෙන් පස්සේ තවත් balls 6 – 10ක්. දැන් R30+ එකකට පැය 4 – 8යි. <span class="low">ලේසියි (balance.js)</span></li>
+  <li><b>අගට රැඳෙන්න ඉලක්ක</b>: quests, leaderboard rewards, ball "upgrade/enchant", boots (reference එකේ RNG boots 17ක්), Kick Krates (special kicks). <span class="mid">විශාලයි</span></li>
+  <li><b>Daily rewards streak එකක් කරන්න</b> (reference එකේ වගේ: දවසක් මග හැරුණොත් Day 1ට). දැන් දවස් මග හැරුණත් ඒවා ඉතුරු වෙන නිසා දිනපතා එන්න හේතුවක් අඩුයි. <span class="low">ලේසියි</span></li>
+  <li><b>Playtime / daily rewards ප්ලේයර් ලෙවල් එකට ගැලපෙන්න</b>: Wins rewards "max kick X ගණනක" වගේ (Gems packs වල වගේ) – පැය ගාණකට පස්සෙත් වටිනවා. <span class="low">ලේසියි</span></li>
+</ol>
+<p>මේ ඕනෑම එකක් කරන්න ඕනේ නම් කියන්න – <code>shared/balance.js</code> වෙනස් කරලා <code>node scripts/balance-sim.mjs</code> එකෙන් ආයේ කාලය බලලා දෙන්නම්.</p>
+
+</body>
+</html>

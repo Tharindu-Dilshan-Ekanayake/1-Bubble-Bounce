@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>+1 Tire Rolling ගේම් මාර්ගෝපදේශය</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;600;800&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Layout: one readable column of sections; wide tables scroll inside their own box. */
+  --bg: #f6f4fb;
+  --panel: #ffffff;
+  --ink: #1f1d33;
+  --muted: #615d7d;
+  --accent: #ff7a1e;
+  --accent2: #2f8ff2;
+  --line: #e2ddef;
+  --display: 'Fredoka', 'Noto Sans Sinhala', system-ui, sans-serif;
+  --body: 'Noto Sans Sinhala', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15131f; --panel: #1f1c2e; --ink: #ece9f8; --muted: #a7a1c4; --accent: #ff9a4a; --accent2: #6fb4ff; --line: #332f48;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15131f; --panel: #1f1c2e; --ink: #ece9f8; --muted: #a7a1c4; --accent: #ff9a4a; --accent2: #6fb4ff; --line: #332f48;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.7; }
+main { max-width: 1080px; margin: 0 auto; padding: 28px 16px 64px; display: flex; flex-direction: column; gap: 22px; }
+header h1 { font-family: var(--display); font-size: clamp(28px, 5vw, 44px); line-height: 1.15; margin: 0; text-wrap: balance; }
+header p { color: var(--muted); max-width: 70ch; margin: 8px 0 0; }
+section { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px 20px 22px; }
+h2 { font-family: var(--display); font-size: 24px; margin: 0 0 10px; text-wrap: balance; }
+h2 .no { color: var(--accent); margin-right: 8px; }
+h3 { font-size: 17px; margin: 18px 0 6px; }
+p, li { max-width: 75ch; }
+ul { padding-left: 22px; margin: 6px 0; }
+.loop { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 4px; }
+.loop span.step { background: color-mix(in srgb, var(--accent2) 14%, transparent); border: 1px solid color-mix(in srgb, var(--accent2) 35%, transparent); border-radius: 999px; padding: 4px 12px; font-weight: 600; }
+.loop span.arrow { color: var(--muted); }
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; margin-top: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { background: color-mix(in srgb, var(--accent) 12%, var(--panel)); font-weight: 800; white-space: nowrap; position: sticky; top: 0; }
+td.n { font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+td.t { color: var(--muted); }
+.sub { display: block; color: var(--muted); font-size: 12px; }
+.pill { display: inline-block; border-radius: 999px; padding: 1px 9px; font-size: 12px; font-weight: 800; color: #fff; }
+.r-common { background: #8a93a3; } .r-uncommon { background: #2fae5a; } .r-rare { background: #1f9ad6; } .r-epic { background: #9a4ce0; }
+.r-legendary { background: #e0a00a; } .r-mythic { background: #e8325a; } .r-secret { background: linear-gradient(90deg,#ff3b5c,#ffb21e,#4ef05a,#2fc6ff,#b15cff); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); border-radius: 8px; padding: 2px 8px; font-size: 13px; font-variant-numeric: tabular-nums; }
+.note { border-left: 4px solid var(--accent); padding: 6px 12px; background: color-mix(in srgb, var(--accent) 8%, transparent); border-radius: 0 8px 8px 0; }
+.good { border-left-color: #2fae5a; background: color-mix(in srgb, #2fae5a 10%, transparent); }
+.warn { border-left-color: #e0a00a; background: color-mix(in srgb, #e0a00a 12%, transparent); }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+code { font-size: 13px; background: color-mix(in srgb, var(--ink) 8%, transparent); padding: 1px 5px; border-radius: 5px; }
+nav { display: flex; flex-wrap: wrap; gap: 6px; }
+nav a { color: var(--accent2); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; font-size: 14px; background: var(--panel); }
+nav a:focus-visible, nav a:hover { outline: 2px solid var(--accent2); }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>+1 Tire Rolling – ගේම් එකේ සම්පූර්ණ විස්තරය</h1>
+  <p>ගේම් එක වැඩ කරන හැටි, stages 60 දිග සහ Wins, tires, pads, pets, rebirth, rewards, සහ player කෙනෙක් කොච්චර වෙලාවකින් මොනවා ලබනවද කියන එක. මේ අංක ඔක්කොම ගත්තේ ගේම් එකේ කෝඩ් එකෙන් (<code>shared/balance.js</code>) සහ ගේම් එක බොට් කෙනෙක් ලවා පැය 12ක් සෙල්ලම් කරවලා (<code>scripts/balance-sim.mjs</code>).</p>
+  <nav style="margin-top:12px">
+    <a href="#loop">ගේම් එක</a><a href="#health">Health</a><a href="#rebirth">Rebirth</a><a href="#roll">Roll</a><a href="#stages">Stages 60</a><a href="#world2">World 2</a><a href="#tires">Tires</a><a href="#pads">Pads</a><a href="#pets">Pets</a><a href="#rewards">Rewards</a><a href="#timeline">කාලය</a><a href="#analysis">විශ්ලේෂණය</a>
+  </nav>
+</header>
+
+<section id="loop">
+  <h2><span class="no">1</span>ගේම් එක වැඩ කරන්නේ කොහොමද</h2>
+  <div class="loop">
+    <span class="step">Training pad එකේ පනිනවා</span><span class="arrow">→</span>
+    <span class="step">Health වැඩි වෙනවා</span><span class="arrow">→</span>
+    <span class="step">ටයරය Roll කරනවා</span><span class="arrow">→</span>
+    <span class="step">Gates කඩාගෙන යනවා</span><span class="arrow">→</span>
+    <span class="step">Wins ලැබෙනවා</span><span class="arrow">→</span>
+    <span class="step">අලුත් ටයර් / pets / passes</span><span class="arrow">→</span>
+    <span class="step">Max level → Rebirth</span>
+  </div>
+  <ul>
+    <li><b>Health</b> තමයි ප්‍රධාන "බලය". Health වැඩි වෙන තරමට ටයරය දුර යනවා, ශක්තිමත් gates කඩනවා.</li>
+    <li><b>Wins</b> තමයි ගේම් එකේ එකම මුදල. ටයර්, eggs, passes, pads, Health packs ඔක්කොම Wins වලින් ගන්නේ.</li>
+    <li>ටයරය roll කරන්න <b>ROLL ZONE</b> (කහ පාට තීරුව) එකට ගිහින් <b>Roll!</b> බොත්තම ඔබන්න (E / Enter).</li>
+    <li>Track එක <b>බෑවුමක්</b>. ඒකේ <b>stages 60</b>ක් තියෙනවා. හැම stage එකකම පටන් ගන්නේ <b>gate</b> එකකින්: පාට කණු දෙකක්, නම සහ ඕනෙ Health ලියපු board එකක්, මැද ලී බිත්තියක්.</li>
+    <li>ඔයාගේ Health එක ඒ gate එකට ඕනෙ ප්‍රමාණයට වඩා <b>වැඩි නම්</b>, ටයරය බිත්තිය කුඩු කරගෙන (SMASH!) ඊළඟ stage එකට යනවා. <b>අඩු නම්</b>, ටයරය gate එකේ වැදිලා කෑලි කෑලි වෙලා කැඩෙනවා ("TIRE BROKE!").</li>
+    <li>Level එක max වුණාම <b>Rebirth</b> කරන්න පුළුවන්. Level සහ Health බිංදුව වෙනවා, ඒත් Health ගුණකය (x2, x3, x4…) සහ max level එක ඉහළ යනවා. Wins, tires, pets නැති වෙන්නේ නෑ.</li>
+  </ul>
+</section>
+
+<section id="health">
+  <h2><span class="no">2</span>Health ලැබෙන හැටි සහ Level</h2>
+  <div class="grid2">
+    <div>
+      <h3>Health ලැබෙන තැන් 3යි</h3>
+      <ul>
+        <li><b>Training pad</b>: ඔයාගේ ටයරය pad එකේ trampoline එකක් වගේ බිම තියලා ඒකේ පනිනවා. හැම පිම්මකටම (තත්පර 0.6) Health = <i>ටයරයේ power × pad ගුණකය × ගුණක</i>.</li>
+        <li><b>Roll කරන අතරේ</b>: ටයරය දුවන හැම තත්පරයකටම Health = ටයරයේ power × ගුණක.</li>
+        <li><b>ඇවිදින කොට</b>: හැම මීටර් 8කටම එක gain එකක් (pad එකට වඩා අඩුයි).</li>
+      </ul>
+      <h3>ගුණක (එකට ගුණ වෙනවා)</h3>
+      <ul>
+        <li>Rebirth ගුණකය: R0 = x1, R1 = x2, R2 = x3 … (1 + rebirths)</li>
+        <li>Pets: සවි කරපු pets 3ක් <b>එකතු</b> වෙනවා (x3 + x2 = x4)</li>
+        <li>x2 Health pass එක සහ x2 Health potion එක (විනාඩි 5) – දෙකම තිබ්බොත් x4</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Level සඳහා ඕනෙ Health</h3>
+      <div class="tbl"><table><tr><th>Level</th><th>මුළු Health</th></tr>
+      <tr><td class='n'>2</td><td class='n'>20</td></tr><tr><td class='n'>5</td><td class='n'>120</td></tr><tr><td class='n'>10</td><td class='n'>610</td></tr><tr><td class='n'>15</td><td class='n'>2.3K</td></tr><tr><td class='n'>23</td><td class='n'>16K</td></tr><tr><td class='n'>31</td><td class='n'>100K</td></tr><tr><td class='n'>39</td><td class='n'>600K</td></tr><tr><td class='n'>47</td><td class='n'>3.2M</td></tr><tr><td class='n'>55</td><td class='n'>16M</td></tr>
+      </table></div>
+      <p class="note">මුලින් හැම level එකකටම පෙරට වඩා ~30% වැඩියෙන් ඕනෙ, පස්සේ ~10%කට අඩු වෙනවා. Max level එකට ගියාම Health එකතු වීම නවතිනවා: ඊට පස්සේ Rebirth කරන්න ඕනෙ.</p>
+    </div>
+  </div>
+</section>
+
+<section id="rebirth">
+  <h2><span class="no">3</span>Rebirth</h2>
+  <ul>
+    <li>Max level = <b>15 + 8 × rebirths</b> (R0 = 15, R1 = 23, R2 = 31 …)</li>
+    <li>Rebirth කළාම: rebirths +1, Health 0, Level 1. Wins, ටයර්, pets, passes ඔක්කොම තියෙනවා.</li>
+    <li><b>Skip</b>: max level එකට කලින් Wins දීලා rebirth කරන්න පුළුවන් (ඒ max level එකේ roll 10ක Wins).</li>
+    <li><b>Auto Rebirth</b> tick කළොත් max level ආපු ගමන් තනියම rebirth වෙනවා.</li>
+    <li>අලුත් training pads unlock වෙන්නෙත් rebirths වලින් (Pads බලන්න).</li>
+    <li><b>Rebirth තෑගි</b>: Rebirth 15 ඉඳන් හැම rebirth 5කටම (15, 20, 25 …) Volcano Eggs ලැබෙනවා: R15: 3, R20: 3, R25: 4, R30: 4, R35: 5, R45: 6 (උපරිම 6). ඒවා Items එකට යනවා; Rebirth panel එකේ ඊළඟ තෑග්ග පෙන්නනවා.</li>
+  </ul>
+  <div class="tbl"><table><tr><th>Rebirth</th><th>Max level</th><th>Max level එකේ Health</th><th>Health ගුණකය</th><th>Max Health එකෙන් roll දුර</th></tr><tr><td class='n'>R0</td><td class='n'>15</td><td class='n'>2.3K</td><td class='n'>x1</td><td class='n'>1,124 m</td></tr><tr><td class='n'>R1</td><td class='n'>23</td><td class='n'>16K</td><td class='n'>x2</td><td class='n'>1,527 m</td></tr><tr><td class='n'>R2</td><td class='n'>31</td><td class='n'>100K</td><td class='n'>x3</td><td class='n'>2,009 m</td></tr><tr><td class='n'>R3</td><td class='n'>39</td><td class='n'>600K</td><td class='n'>x4</td><td class='n'>2,417 m</td></tr><tr><td class='n'>R5</td><td class='n'>55</td><td class='n'>16M</td><td class='n'>x6</td><td class='n'>3,404 m</td></tr><tr><td class='n'>R10</td><td class='n'>95</td><td class='n'>23B</td><td class='n'>x11</td><td class='n'>5,707 m</td></tr><tr><td class='n'>R15</td><td class='n'>135</td><td class='n'>11T</td><td class='n'>x16</td><td class='n'>8,115 m</td></tr><tr><td class='n'>R20</td><td class='n'>175</td><td class='n'>2.3Qa</td><td class='n'>x21</td><td class='n'>10,351 m</td></tr></table></div>
+</section>
+
+<section id="roll">
+  <h2><span class="no">4</span>Roll කිරීම, gates සහ Wins</h2>
+  <div class="grid2">
+    <div>
+      <h3>ටයරය කොච්චර දුර යනවද</h3>
+      <p>Health 0 වුණත් මීටර් 60ක් යනවා. Gate එකක් ළඟට යන්න ඕනෙ Health = ඒ gate එකේ බිත්තියට ඕනෙ Health ÷ 1.3. ඒ කියන්නේ ඔයා <b>gate එක ළඟට යනවා, ඒත් කඩන්න තව ටිකක් Health ඕනෙ</b>. ඒ නිසා player කෙනෙක්ට ඊළඟ ඉලක්කය හැම තිස්සෙම පේනවා.</p>
+      <div class="tbl"><table><tr><th>Health</th><th>Roll දුර</th><th>කඩන gates</th></tr><tr><td class='n'>0</td><td class='n'>60 m</td><td class='n'>0</td></tr><tr><td class='n'>30</td><td class='n'>298 m</td><td class='n'>2</td></tr><tr><td class='n'>100</td><td class='n'>510 m</td><td class='n'>4</td></tr><tr><td class='n'>1K</td><td class='n'>924 m</td><td class='n'>7</td></tr><tr><td class='n'>10K</td><td class='n'>1,452 m</td><td class='n'>11</td></tr><tr><td class='n'>100K</td><td class='n'>2,009 m</td><td class='n'>14</td></tr><tr><td class='n'>1M</td><td class='n'>2,614 m</td><td class='n'>17</td></tr><tr><td class='n'>100M</td><td class='n'>3,916 m</td><td class='n'>23</td></tr><tr><td class='n'>10B</td><td class='n'>5,434 m</td><td class='n'>29</td></tr><tr><td class='n'>100T</td><td class='n'>9,032 m</td><td class='n'>41</td></tr></table></div>
+    </div>
+    <div>
+      <h3>එක roll එකකින් Wins ලැබෙන තැන් 4යි</h3>
+      <ol>
+        <li><b>මීටර් වලට</b>: ඒ stage එකේ "Wins/මීටරය" × යන මීටර් ගාන (පස්සේ stages වල වැඩියි)</li>
+        <li><b>Trophies</b>: මීටර් 40ට පස්සේ හැම මීටර් 80කටම එකක් (stage එකේ මීටර් 80ක Wins)</li>
+        <li><b>SMASH</b>: කඩන හැම gate එකකටම ඒ gate එකේ smash Wins (හැම roll එකකටම)</li>
+        <li><b>අලුත් stage prize</b>: stage එකකට <b>පළවෙනි පාර</b> ගියාම එක වතාවක් විතරක්</li>
+      </ol>
+      <p>මේ ඔක්කොම x2 Wins pass / potion වලින් දෙගුණ වෙනවා (දෙකම තිබ්බොත් x4).</p>
+      <h3>Roll එකේ animations</h3>
+      <ul>
+        <li>බිත්තිය කුඩු වෙනකොට slow motion, කෑලි, splinters, camera punch, "SMASH x3!" combo, combo එකට උස් වෙන sound එක</li>
+        <li>අලුත් stage එකට යනකොට confetti + jingle, roll එක ඉවර වුණාම trophies Wins counter එකට පියාඹනවා</li>
+        <li>වේගය වැඩි වෙනකොට දෙපැත්තෙන් speed lines සහ blur</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="stages">
+  <h2><span class="no">5</span>Stages 60 – දිග, Health සහ Wins</h2>
+  <p>හැම stage එකක්ම පෙර එකට වඩා මීටර් 6කින් දිගයි (මීටර් 100 → 450). මුළු track එක මීටර් 16,268යි. පාට සහ දර්ශන (themes) 20යි; stages 21–60 ඒ themes අලුත් නම් එක්ක නැවත එනවා. හැම gate එකකටම පෙර එකට වඩා ~2 ගුණයක Health ඕනෙ.</p>
+  <ul>
+    <li><b>Gate Health</b> = ඒ stage එකට ඇතුළු වෙන්න (බිත්තිය කඩන්න) ඕනෙ Health</li>
+    <li><b>Stage එක පුරා Wins</b> = ඒ stage එක මුල ඉඳන් අගට යනකොට ලැබෙන Wins (මීටර් + trophies + එහි gate SMASH)</li>
+    <li><b>Roll එකක මුළු Wins</b> = මුල ඉඳන් ඒ stage එකේ අග දක්වා යන roll එකක් දෙන මුළු Wins (x2 නැතුව)</li>
+    <li><b>Bot කාලය</b> = සාමාන්‍ය නොමිලේ player කෙනෙක් ඒ stage එකට (කුමන world එකේ හරි) පළවෙනි පාර යන්න ගත්ත කාලය</li>
+    <li>Wins අගයන් World 1 වල. World 2 වල ඒවා x3යි.</li>
+  </ul>
+  <div class="tbl" style="max-height: 70vh;"><table>
+    <tr><th>#</th><th>Stage (World 1)</th><th>World 2 නම</th><th>පටන් ගන්නේ (m)</th><th>දිග (m)</th><th>Gate Health</th><th>Wins/m</th><th>SMASH Wins</th><th>පළමු prize</th><th>Stage එක පුරා Wins</th><th>Roll එකක මුළු Wins</th><th>Bot කාලය</th></tr>
+    <tr><td class='n'>1</td><td><b>Grassy Meadow</b><span class='sub'>තණබිම</span></td><td>Lollipop Lane</td><td class='n'>0</td><td class='n'>100</td><td class='n'>–</td><td class='n'>0.006</td><td class='n'>–</td><td class='n'>–</td><td class='n'>2</td><td class='n'>2</td><td class='n t'>ආරම්භය</td></tr><tr><td class='n'>2</td><td><b>Autumn Forest</b><span class='sub'>සරත් වනය</span></td><td>Rainbow Bridge</td><td class='n'>100</td><td class='n'>100</td><td class='n'>11</td><td class='n'>0.0072</td><td class='n'>2</td><td class='n'>5</td><td class='n'>4</td><td class='n'>5</td><td class='n t'>42 ත.</td></tr><tr><td class='n'>3</td><td><b>Desert Canyon</b><span class='sub'>කාන්තාරය</span></td><td>Balloon Skies</td><td class='n'>200</td><td class='n'>106</td><td class='n'>21</td><td class='n'>0.00984</td><td class='n'>3</td><td class='n'>7</td><td class='n'>6</td><td class='n'>11</td><td class='n t'>42 ත.</td></tr><tr><td class='n'>4</td><td><b>Sunny Beach</b><span class='sub'>වෙරළ</span></td><td>Gem Garden</td><td class='n'>306</td><td class='n'>112</td><td class='n'>41</td><td class='n'>0.0135</td><td class='n'>4</td><td class='n'>9</td><td class='n'>7</td><td class='n'>18</td><td class='n t'>1 මි. 10 ත.</td></tr><tr><td class='n'>5</td><td><b>Jungle Ruins</b><span class='sub'>කැලෑව</span></td><td>Pixel Park</td><td class='n'>418</td><td class='n'>118</td><td class='n'>79</td><td class='n'>0.0185</td><td class='n'>5</td><td class='n'>13</td><td class='n'>9</td><td class='n'>27</td><td class='n t'>1 මි. 44 ත.</td></tr><tr><td class='n'>6</td><td><b>Frozen Peaks</b><span class='sub'>හිම කඳු</span></td><td>Blossom Bay</td><td class='n'>536</td><td class='n'>124</td><td class='n'>150</td><td class='n'>0.0255</td><td class='n'>7</td><td class='n'>18</td><td class='n'>12</td><td class='n'>39</td><td class='n t'>1 මි. 44 ත.</td></tr><tr><td class='n'>7</td><td><b>Cherry Blossom</b><span class='sub'>චෙරි මල්</span></td><td>Toadstool Town</td><td class='n'>660</td><td class='n'>130</td><td class='n'>300</td><td class='n'>0.0351</td><td class='n'>10</td><td class='n'>24</td><td class='n'>21</td><td class='n'>60</td><td class='n t'>2 මි. 16 ත.</td></tr><tr><td class='n'>8</td><td><b>Candy Land</b><span class='sub'>රසකැවිලි</span></td><td>Bubble Lagoon</td><td class='n'>790</td><td class='n'>136</td><td class='n'>590</td><td class='n'>0.0486</td><td class='n'>13</td><td class='n'>34</td><td class='n'>28</td><td class='n'>87</td><td class='n t'>2 මි. 52 ත.</td></tr><tr><td class='n'>9</td><td><b>Mushroom Valley</b><span class='sub'>හතු</span></td><td>Polar Lights</td><td class='n'>926</td><td class='n'>142</td><td class='n'>1.2K</td><td class='n'>0.0673</td><td class='n'>19</td><td class='n'>47</td><td class='n'>34</td><td class='n'>121</td><td class='n t'>3 මි. 34 ත.</td></tr><tr><td class='n'>10</td><td><b>Lava Volcano</b><span class='sub'>ගිනිකඳු</span></td><td>Moonbounce</td><td class='n'>1,068</td><td class='n'>148</td><td class='n'>2.3K</td><td class='n'>0.0934</td><td class='n'>26</td><td class='n'>65</td><td class='n'>54</td><td class='n'>175</td><td class='n t'>4 මි. 20 ත.</td></tr><tr><td class='n'>11</td><td><b>Lily Swamp</b><span class='sub'>වගුරු</span></td><td>Dragon&#x27;s Den</td><td class='n'>1,216</td><td class='n'>154</td><td class='n'>4.6K</td><td class='n'>0.13</td><td class='n'>36</td><td class='n'>90</td><td class='n'>76</td><td class='n'>251</td><td class='n t'>6 මි. 34 ත.</td></tr><tr><td class='n'>12</td><td><b>Crystal Caves</b><span class='sub'>ස්ඵටික</span></td><td>Monkey Jungle</td><td class='n'>1,370</td><td class='n'>160</td><td class='n'>9.2K</td><td class='n'>0.181</td><td class='n'>50</td><td class='n'>130</td><td class='n'>107</td><td class='n'>358</td><td class='n t'>7 මි. 10 ත.</td></tr><tr><td class='n'>13</td><td><b>Coral Reef</b><span class='sub'>මුහුද</span></td><td>Froggy Pond</td><td class='n'>1,530</td><td class='n'>166</td><td class='n'>18K</td><td class='n'>0.253</td><td class='n'>70</td><td class='n'>180</td><td class='n'>152</td><td class='n'>509</td><td class='n t'>9 මි. 23 ත.</td></tr><tr><td class='n'>14</td><td><b>Neon City</b><span class='sub'>නියොන් නගරය</span></td><td>Penguin Slopes</td><td class='n'>1,696</td><td class='n'>172</td><td class='n'>37K</td><td class='n'>0.355</td><td class='n'>99</td><td class='n'>250</td><td class='n'>216</td><td class='n'>725</td><td class='n t'>9 මි. 54 ත.</td></tr><tr><td class='n'>15</td><td><b>Cloud Kingdom</b><span class='sub'>වලාකුළු</span></td><td>Pirate Cove</td><td class='n'>1,868</td><td class='n'>178</td><td class='n'>75K</td><td class='n'>0.498</td><td class='n'>140</td><td class='n'>350</td><td class='n'>349</td><td class='n'>1.1K</td><td class='n t'>10 මි.</td></tr><tr><td class='n'>16</td><td><b>Rainbow Road</b><span class='sub'>දේදුන්න</span></td><td>Pharaoh Dunes</td><td class='n'>2,046</td><td class='n'>184</td><td class='n'>150K</td><td class='n'>0.7</td><td class='n'>190</td><td class='n'>490</td><td class='n'>431</td><td class='n'>1.5K</td><td class='n t'>12 මි.</td></tr><tr><td class='n'>17</td><td><b>Moon Base</b><span class='sub'>සඳ</span></td><td>Acorn Woods</td><td class='n'>2,230</td><td class='n'>190</td><td class='n'>310K</td><td class='n'>0.987</td><td class='n'>270</td><td class='n'>690</td><td class='n'>616</td><td class='n'>2.1K</td><td class='n t'>13 මි.</td></tr><tr><td class='n'>18</td><td><b>Aurora Tundra</b><span class='sub'>අරෝරා</span></td><td>Bunny Hills</td><td class='n'>2,420</td><td class='n'>196</td><td class='n'>640K</td><td class='n'>1.39</td><td class='n'>390</td><td class='n'>970</td><td class='n'>995</td><td class='n'>3.1K</td><td class='n t'>15 මි.</td></tr><tr><td class='n'>19</td><td><b>Outer Space</b><span class='sub'>අභ්‍යවකාශය</span></td><td>Rocket Run</td><td class='n'>2,616</td><td class='n'>202</td><td class='n'>1.3M</td><td class='n'>1.97</td><td class='n'>550</td><td class='n'>1.4K</td><td class='n'>1.3K</td><td class='n'>4.4K</td><td class='n t'>15 මි.</td></tr><tr><td class='n'>20</td><td><b>Cosmic Core</b><span class='sub'>විශ්වය</span></td><td>Star Factory</td><td class='n'>2,818</td><td class='n'>208</td><td class='n'>2.7M</td><td class='n'>2.8</td><td class='n'>780</td><td class='n'>1.9K</td><td class='n'>2K</td><td class='n'>6.4K</td><td class='n t'>16 මි.</td></tr><tr><td class='n'>21</td><td><b>Green Hills</b><span class='sub'>තණබිම</span></td><td>Gumdrop Hills</td><td class='n'>3,026</td><td class='n'>214</td><td class='n'>5.7M</td><td class='n'>3.98</td><td class='n'>1.1K</td><td class='n'>2.8K</td><td class='n'>2.6K</td><td class='n'>9K</td><td class='n t'>18 මි.</td></tr><tr><td class='n'>22</td><td><b>Maple Woods</b><span class='sub'>සරත් වනය</span></td><td>Unicorn Meadow</td><td class='n'>3,240</td><td class='n'>220</td><td class='n'>12M</td><td class='n'>5.66</td><td class='n'>1.6K</td><td class='n'>3.9K</td><td class='n'>4.2K</td><td class='n'>13K</td><td class='n t'>19 මි.</td></tr><tr><td class='n'>23</td><td><b>Dune Sea</b><span class='sub'>කාන්තාරය</span></td><td>Floating Isles</td><td class='n'>3,460</td><td class='n'>226</td><td class='n'>25M</td><td class='n'>8.08</td><td class='n'>2.2K</td><td class='n'>5.6K</td><td class='n'>6K</td><td class='n'>19K</td><td class='n t'>20 මි.</td></tr><tr><td class='n'>24</td><td><b>Palm Island</b><span class='sub'>වෙරළ</span></td><td>Amethyst Hollow</td><td class='n'>3,686</td><td class='n'>232</td><td class='n'>53M</td><td class='n'>11.6</td><td class='n'>3.2K</td><td class='n'>8K</td><td class='n'>8.7K</td><td class='n'>27K</td><td class='n t'>21 මි.</td></tr><tr><td class='n'>25</td><td><b>Lost Temple</b><span class='sub'>කැලෑව</span></td><td>Robot City</td><td class='n'>3,918</td><td class='n'>238</td><td class='n'>110M</td><td class='n'>16.6</td><td class='n'>4.6K</td><td class='n'>12K</td><td class='n'>12K</td><td class='n'>40K</td><td class='n t'>22 මි.</td></tr><tr><td class='n'>26</td><td><b>Glacier Pass</b><span class='sub'>හිම කඳු</span></td><td>Tea Garden</td><td class='n'>4,156</td><td class='n'>244</td><td class='n'>240M</td><td class='n'>23.8</td><td class='n'>6.6K</td><td class='n'>17K</td><td class='n'>18K</td><td class='n'>58K</td><td class='n t'>22 මි.</td></tr><tr><td class='n'>27</td><td><b>Sakura Garden</b><span class='sub'>චෙරි මල්</span></td><td>Fairy Ring</td><td class='n'>4,400</td><td class='n'>250</td><td class='n'>510M</td><td class='n'>34.2</td><td class='n'>9.5K</td><td class='n'>24K</td><td class='n'>26K</td><td class='n'>84K</td><td class='n t'>24 මි.</td></tr><tr><td class='n'>28</td><td><b>Sweet Valley</b><span class='sub'>රසකැවිලි</span></td><td>Shark Reef</td><td class='n'>4,650</td><td class='n'>256</td><td class='n'>1.1B</td><td class='n'>49.3</td><td class='n'>14K</td><td class='n'>34K</td><td class='n'>38K</td><td class='n'>123K</td><td class='n t'>25 මි.</td></tr><tr><td class='n'>29</td><td><b>Fungi Forest</b><span class='sub'>හතු</span></td><td>Snow Owl Peak</td><td class='n'>4,906</td><td class='n'>262</td><td class='n'>2.3B</td><td class='n'>71.3</td><td class='n'>20K</td><td class='n'>50K</td><td class='n'>61K</td><td class='n'>184K</td><td class='n t'>27 මි.</td></tr><tr><td class='n'>30</td><td><b>Magma Core</b><span class='sub'>ගිනිකඳු</span></td><td>Crater Camp</td><td class='n'>5,168</td><td class='n'>268</td><td class='n'>5B</td><td class='n'>103</td><td class='n'>29K</td><td class='n'>72K</td><td class='n'>81K</td><td class='n'>265K</td><td class='n t'>28 මි.</td></tr><tr><td class='n'>31</td><td><b>Green Marsh</b><span class='sub'>වගුරු</span></td><td>Fire Falls</td><td class='n'>5,436</td><td class='n'>274</td><td class='n'>11B</td><td class='n'>150</td><td class='n'>42K</td><td class='n'>100K</td><td class='n'>119K</td><td class='n'>384K</td><td class='n t'>30 මි.</td></tr><tr><td class='n'>32</td><td><b>Gem Mines</b><span class='sub'>ස්ඵටික</span></td><td>Tiger Temple</td><td class='n'>5,710</td><td class='n'>280</td><td class='n'>24B</td><td class='n'>218</td><td class='n'>60K</td><td class='n'>150K</td><td class='n'>190K</td><td class='n'>575K</td><td class='n t'>33 මි.</td></tr><tr><td class='n'>33</td><td><b>Deep Ocean</b><span class='sub'>මුහුද</span></td><td>Gator Bayou</td><td class='n'>5,990</td><td class='n'>286</td><td class='n'>52B</td><td class='n'>317</td><td class='n'>88K</td><td class='n'>220K</td><td class='n'>254K</td><td class='n'>830K</td><td class='n t'>34 මි.</td></tr><tr><td class='n'>34</td><td><b>Cyber City</b><span class='sub'>නියොන් නගරය</span></td><td>Yeti Cave</td><td class='n'>6,276</td><td class='n'>292</td><td class='n'>110B</td><td class='n'>462</td><td class='n'>130K</td><td class='n'>320K</td><td class='n'>412K</td><td class='n'>1.2M</td><td class='n t'>37 මි.</td></tr><tr><td class='n'>35</td><td><b>Sky Castle</b><span class='sub'>වලාකුළු</span></td><td>Treasure Island</td><td class='n'>6,568</td><td class='n'>298</td><td class='n'>250B</td><td class='n'>676</td><td class='n'>190K</td><td class='n'>470K</td><td class='n'>607K</td><td class='n'>1.9M</td><td class='n t'>37 මි.</td></tr><tr><td class='n'>36</td><td><b>Prism Path</b><span class='sub'>දේදුන්න</span></td><td>Cactus Canyon</td><td class='n'>6,866</td><td class='n'>304</td><td class='n'>560B</td><td class='n'>990</td><td class='n'>270K</td><td class='n'>690K</td><td class='n'>887K</td><td class='n'>2.7M</td><td class='n t'>42 මි.</td></tr><tr><td class='n'>37</td><td><b>Lunar Craters</b><span class='sub'>සඳ</span></td><td>Maple Mill</td><td class='n'>7,170</td><td class='n'>310</td><td class='n'>1.2T</td><td class='n'>1.4K</td><td class='n'>400K</td><td class='n'>1M</td><td class='n'>1.2M</td><td class='n'>3.9M</td><td class='n t'>45 මි.</td></tr><tr><td class='n'>38</td><td><b>Northern Lights</b><span class='sub'>අරෝරා</span></td><td>Windmill Farm</td><td class='n'>7,480</td><td class='n'>316</td><td class='n'>2.8T</td><td class='n'>2.1K</td><td class='n'>590K</td><td class='n'>1.5M</td><td class='n'>2M</td><td class='n'>5.9M</td><td class='n t'>46 මි.</td></tr><tr><td class='n'>39</td><td><b>Galaxy Rift</b><span class='sub'>අභ්‍යවකාශය</span></td><td>Asteroid Belt</td><td class='n'>7,796</td><td class='n'>322</td><td class='n'>6.2T</td><td class='n'>3.1K</td><td class='n'>870K</td><td class='n'>2.2M</td><td class='n'>2.9M</td><td class='n'>8.8M</td><td class='n t'>51 මි.</td></tr><tr><td class='n'>40</td><td><b>Infinity</b><span class='sub'>විශ්වය</span></td><td>Supernova</td><td class='n'>8,118</td><td class='n'>328</td><td class='n'>14T</td><td class='n'>4.7K</td><td class='n'>1.3M</td><td class='n'>3.2M</td><td class='n'>4.7M</td><td class='n'>13M</td><td class='n t'>57 මි.</td></tr><tr><td class='n'>41</td><td><b>Sunflower Fields</b><span class='sub'>තණබිම</span></td><td>Chocolate River</td><td class='n'>8,446</td><td class='n'>334</td><td class='n'>32T</td><td class='n'>6.9K</td><td class='n'>1.9M</td><td class='n'>4.8M</td><td class='n'>6.4M</td><td class='n'>19M</td><td class='n t'>58 මි.</td></tr><tr><td class='n'>42</td><td><b>Harvest Valley</b><span class='sub'>සරත් වනය</span></td><td>Prism Palace</td><td class='n'>8,780</td><td class='n'>340</td><td class='n'>72T</td><td class='n'>10K</td><td class='n'>2.8M</td><td class='n'>7.1M</td><td class='n'>9.5M</td><td class='n'>29M</td><td class='n t'>1 පැ. 4 මි.</td></tr><tr><td class='n'>43</td><td><b>Golden Oasis</b><span class='sub'>කාන්තාරය</span></td><td>Thunder Clouds</td><td class='n'>9,120</td><td class='n'>346</td><td class='n'>160T</td><td class='n'>15K</td><td class='n'>4.2M</td><td class='n'>10M</td><td class='n'>14M</td><td class='n'>43M</td><td class='n t'>1 පැ. 13 මි.</td></tr><tr><td class='n'>44</td><td><b>Blue Lagoon</b><span class='sub'>වෙරළ</span></td><td>Diamond Depths</td><td class='n'>9,466</td><td class='n'>352</td><td class='n'>370T</td><td class='n'>22K</td><td class='n'>6.2M</td><td class='n'>16M</td><td class='n'>23M</td><td class='n'>66M</td><td class='n t'>1 පැ. 20 මි.</td></tr><tr><td class='n'>45</td><td><b>Treetop Canopy</b><span class='sub'>කැලෑව</span></td><td>Hologram Highway</td><td class='n'>9,818</td><td class='n'>358</td><td class='n'>860T</td><td class='n'>33K</td><td class='n'>9.3M</td><td class='n'>23M</td><td class='n'>32M</td><td class='n'>98M</td><td class='n t'>1 පැ. 30 මි.</td></tr><tr><td class='n'>46</td><td><b>Yeti Mountain</b><span class='sub'>හිම කඳු</span></td><td>Dragon Garden</td><td class='n'>10,176</td><td class='n'>364</td><td class='n'>2Qa</td><td class='n'>50K</td><td class='n'>14M</td><td class='n'>35M</td><td class='n'>52M</td><td class='n'>150M</td><td class='n t'>1 පැ. 32 මි.</td></tr><tr><td class='n'>47</td><td><b>Lantern Garden</b><span class='sub'>චෙරි මල්</span></td><td>Glow Forest</td><td class='n'>10,540</td><td class='n'>370</td><td class='n'>4.6Qa</td><td class='n'>74K</td><td class='n'>21M</td><td class='n'>52M</td><td class='n'>72M</td><td class='n'>223M</td><td class='n t'>1 පැ. 41 මි.</td></tr><tr><td class='n'>48</td><td><b>Cupcake Kingdom</b><span class='sub'>රසකැවිලි</span></td><td>Kraken Deep</td><td class='n'>10,910</td><td class='n'>376</td><td class='n'>11Qa</td><td class='n'>112K</td><td class='n'>31M</td><td class='n'>78M</td><td class='n'>117M</td><td class='n'>341M</td><td class='n t'>1 පැ. 57 මි.</td></tr><tr><td class='n'>49</td><td><b>Glowcap Grotto</b><span class='sub'>හතු</span></td><td>Frost Crown</td><td class='n'>11,286</td><td class='n'>382</td><td class='n'>25Qa</td><td class='n'>168K</td><td class='n'>47M</td><td class='n'>120M</td><td class='n'>178M</td><td class='n'>519M</td><td class='n t'>2 පැ. 13 මි.</td></tr><tr><td class='n'>50</td><td><b>Inferno Peak</b><span class='sub'>ගිනිකඳු</span></td><td>Saturn Rings</td><td class='n'>11,668</td><td class='n'>388</td><td class='n'>58Qa</td><td class='n'>253K</td><td class='n'>70M</td><td class='n'>180M</td><td class='n'>269M</td><td class='n'>788M</td><td class='n t'>2 පැ. 40 මි.</td></tr><tr><td class='n'>51</td><td><b>Firefly Bayou</b><span class='sub'>වගුරු</span></td><td>Magma Throne</td><td class='n'>12,056</td><td class='n'>394</td><td class='n'>140Qa</td><td class='n'>382K</td><td class='n'>110M</td><td class='n'>270M</td><td class='n'>413M</td><td class='n'>1.2B</td><td class='n t'>3 පැ. 3 මි.</td></tr><tr><td class='n'>52</td><td><b>Geode Valley</b><span class='sub'>ස්ඵටික</span></td><td>Dino Valley</td><td class='n'>12,450</td><td class='n'>400</td><td class='n'>320Qa</td><td class='n'>576K</td><td class='n'>160M</td><td class='n'>400M</td><td class='n'>620M</td><td class='n'>1.8B</td><td class='n t'>3 පැ. 47 මි.</td></tr><tr><td class='n'>53</td><td><b>Atlantis</b><span class='sub'>මුහුද</span></td><td>Lotus Marsh</td><td class='n'>12,850</td><td class='n'>406</td><td class='n'>760Qa</td><td class='n'>872K</td><td class='n'>240M</td><td class='n'>610M</td><td class='n'>942M</td><td class='n'>2.8B</td><td class='n t'>4 පැ. 48 මි.</td></tr><tr><td class='n'>54</td><td><b>Arcade Avenue</b><span class='sub'>නියොන් නගරය</span></td><td>Ice Palace</td><td class='n'>13,256</td><td class='n'>412</td><td class='n'>1.8Qi</td><td class='n'>1.3M</td><td class='n'>370M</td><td class='n'>920M</td><td class='n'>1.4B</td><td class='n'>4.2B</td><td class='n t'>5 පැ. 5 මි.</td></tr><tr><td class='n'>55</td><td><b>Sky Islands</b><span class='sub'>වලාකුළු</span></td><td>Mermaid Shores</td><td class='n'>13,668</td><td class='n'>418</td><td class='n'>4.3Qi</td><td class='n'>2M</td><td class='n'>560M</td><td class='n'>1.4B</td><td class='n'>2.2B</td><td class='n'>6.4B</td><td class='n t'>6 පැ. 51 මි.</td></tr><tr><td class='n'>56</td><td><b>Unicorn Trail</b><span class='sub'>දේදුන්න</span></td><td>Sphinx Sands</td><td class='n'>14,086</td><td class='n'>424</td><td class='n'>10Qi</td><td class='n'>3M</td><td class='n'>850M</td><td class='n'>2.1B</td><td class='n'>3.3B</td><td class='n'>9.7B</td><td class='n t'>9 පැ. 31 මි.</td></tr><tr><td class='n'>57</td><td><b>Red Planet</b><span class='sub'>සඳ</span></td><td>Golden Grove</td><td class='n'>14,510</td><td class='n'>430</td><td class='n'>25Qi</td><td class='n'>4.7M</td><td class='n'>1.3B</td><td class='n'>3.2B</td><td class='n'>5.6B</td><td class='n'>15B</td><td class='n t'>12 පැ.+</td></tr><tr><td class='n'>58</td><td><b>Comet Ice</b><span class='sub'>අරෝරා</span></td><td>Clover Kingdom</td><td class='n'>14,940</td><td class='n'>436</td><td class='n'>60Qi</td><td class='n'>7.1M</td><td class='n'>2B</td><td class='n'>4.9B</td><td class='n'>7.9B</td><td class='n'>23B</td><td class='n t'>12 පැ.+</td></tr><tr><td class='n'>59</td><td><b>Nebula</b><span class='sub'>අභ්‍යවකාශය</span></td><td>Black Hole</td><td class='n'>15,376</td><td class='n'>442</td><td class='n'>150Qi</td><td class='n'>11M</td><td class='n'>3B</td><td class='n'>7.5B</td><td class='n'>13B</td><td class='n'>36B</td><td class='n t'>12 පැ.+</td></tr><tr><td class='n'>60</td><td><b>The Beyond</b><span class='sub'>විශ්වය</span></td><td>The Multiverse</td><td class='n'>15,818</td><td class='n'>450</td><td class='n'>350Qi</td><td class='n'>17M</td><td class='n'>4.6B</td><td class='n'>12B</td><td class='n'>19B</td><td class='n'>55B</td><td class='n t'>12 පැ.+</td></tr>
+  </table></div>
+</section>
+
+<section id="world2">
+  <h2><span class="no">5½</span>World 2</h2>
+  <p>Roll zone එකට දකුණු පැත්තේ තියෙන <b>portal</b> එක. Wins <b>25K</b>ක් අතේ තියෙනකොට ඇතුළට ඇවිද ගියාම World 2 ට යනවා. Wins වියදම් වෙන්නේ නෑ, එක පාරක් open වුණාම සදහටම open. ආපහු World 1 ට යන්න portal එකෙන් එළියට ගිහින් ආයෙත් ඇතුළු වෙන්න.</p>
+  <ul>
+    <li><b>හැම roll එකකම Wins x3</b>: මීටර්, trophies, SMASH, අලුත් stage prizes ඔක්කොම.</li>
+    <li><b>අලුත් stages 60</b>: අලුත් නම් (Lollipop Lane, Rainbow Bridge, Balloon Skies …) සහ වෙනස් පිළිවෙළකට themes (Candy Land එකෙන් පටන් ගන්නවා). Gates තියෙන තැන් සහ ඕනෙ Health World 1 වගේමයි, ඒ නිසා rebirth කළාට පස්සේ වුණත් World 2 හැම විටම වාසියි.</li>
+    <li><b>අලුත් stage prizes</b> World 2 වල වෙනම: World 1 දැනටමත් ගිය stages වලටත් ආයෙත් prize (x3) ලැබෙනවා.</li>
+    <li>Lobby එකේ අහස දම් / රෝස පාටට හැරෙනවා. පේන්නේ ඒ world එකේ ඉන්න players විතරයි.</li>
+    <li>World 2 ට ගියාම "World Traveller" badge එක ලැබෙනවා.</li>
+  </ul>
+</section>
+
+<section id="tires">
+  <h2><span class="no">6</span>Tires 24</h2>
+  <p>ටයර් ගන්නේ showroom එකෙන් (plaza එකේ දකුණු පැත්ත), පිළිවෙළට. <b>Power</b> = හැම Health gain එකකම මූලික අගය. ගන්න ගමන්ම සවි වෙනවා; confetti එක්ක "NEW TIRE!" පෙන්නනවා. මේවා ඇත්ත ටයර් නෙවෙයි: රෝදයක් වගේ පෙරළෙන විනෝදජනක දේවල් (පළතුරු පෙති, cookie, කාසි, burger, cake, ග්‍රහලෝක…). මිල වැඩි වෙන තරමට වඩා විහිළු සහ මායාකාරී. හැම එකකම මැද cap එකේ පුංචි පින්තූරයක් (smiley, හදවත, ඔටුන්න, monster මූණ…).</p>
+  <div class="tbl"><table><tr><th>#</th><th>ටයරය</th><th>Rarity</th><th>Power</th><th>මිල (Wins)</th><th>Bot කාලය</th></tr><tr><td class='n'>1</td><td><b>Orange Slice</b><span class='sub'>දොඩම් පෙත්තක් + smiley මූණ</span></td><td><span class='pill r-common'>Common</span></td><td class='n'>+1</td><td class='n'>නොමිලේ</td><td class='n t'>ආරම්භයේ</td></tr><tr><td class='n'>2</td><td><b>Lime Slice</b><span class='sub'>දෙහි පෙත්තක්</span></td><td><span class='pill r-common'>Common</span></td><td class='n'>+3</td><td class='n'>1</td><td class='n t'>42 ත.</td></tr><tr><td class='n'>3</td><td><b>Wooden Wheel</b><span class='sub'>ලී රෝදය, ලී spokes</span></td><td><span class='pill r-common'>Common</span></td><td class='n'>+5</td><td class='n'>15</td><td class='n t'>42 ත.</td></tr><tr><td class='n'>4</td><td><b>Stone Wheel</b><span class='sub'>ගල් රෝදය (caveman)</span></td><td><span class='pill r-uncommon'>Uncommon</span></td><td class='n'>+12</td><td class='n'>75</td><td class='n t'>1 මි. 44 ත.</td></tr><tr><td class='n'>5</td><td><b>Giant Cookie</b><span class='sub'>ලොකු cookie, chocolate chips</span></td><td><span class='pill r-uncommon'>Uncommon</span></td><td class='n'>+30</td><td class='n'>300</td><td class='n t'>4 මි. 20 ත.</td></tr><tr><td class='n'>6</td><td><b>Pizza Wheel</b><span class='sub'>crust + චීස් + pepperoni</span></td><td><span class='pill r-rare'>Rare</span></td><td class='n'>+75</td><td class='n'>1.2K</td><td class='n t'>7 මි. 54 ත.</td></tr><tr><td class='n'>7</td><td><b>Donut</b><span class='sub'>රෝස icing + sprinkles</span></td><td><span class='pill r-rare'>Rare</span></td><td class='n'>+200</td><td class='n'>4.5K</td><td class='n t'>13 මි.</td></tr><tr><td class='n'>8</td><td><b>Watermelon</b><span class='sub'>කොමඩු පෙත්ත + ඇට</span></td><td><span class='pill r-rare'>Rare</span></td><td class='n'>+500</td><td class='n'>16K</td><td class='n t'>16 මි.</td></tr><tr><td class='n'>9</td><td><b>Cheese Wheel</b><span class='sub'>කුහර තියෙන චීස් රෝදය</span></td><td><span class='pill r-epic'>Epic</span></td><td class='n'>+1.2K</td><td class='n'>55K</td><td class='n t'>19 මි.</td></tr><tr><td class='n'>10</td><td><b>Peppermint Candy</b><span class='sub'>රතු-සුදු candy swirl</span></td><td><span class='pill r-epic'>Epic</span></td><td class='n'>+3.5K</td><td class='n'>180K</td><td class='n t'>20 මි.</td></tr><tr><td class='n'>11</td><td><b>Silver Coin</b><span class='sub'>රිදී කාසිය, දාර ඉරි</span></td><td><span class='pill r-epic'>Epic</span></td><td class='n'>+9K</td><td class='n'>600K</td><td class='n t'>21 මි.</td></tr><tr><td class='n'>12</td><td><b>Ice Cream</b><span class='sub'>ice cream scoops + waffle cone</span></td><td><span class='pill r-epic'>Epic</span></td><td class='n'>+23K</td><td class='n'>2M</td><td class='n t'>24 මි.</td></tr><tr><td class='n'>13</td><td><b>Gold Coin</b><span class='sub'>රත්තරන් කාසිය + ඔටුන්න</span></td><td><span class='pill r-legendary'>Legendary</span></td><td class='n'>+60K</td><td class='n'>6M</td><td class='n t'>27 මි.</td></tr><tr><td class='n'>14</td><td><b>Lava Rock</b><span class='sub'>ලාවා ගල, ඉරිතැලීම්</span></td><td><span class='pill r-legendary'>Legendary</span></td><td class='n'>+155K</td><td class='n'>17M</td><td class='n t'>31 මි.</td></tr><tr><td class='n'>15</td><td><b>Sushi Roll</b><span class='sub'>sushi roll: බත්, salmon, avocado</span></td><td><span class='pill r-legendary'>Legendary</span></td><td class='n'>+400K</td><td class='n'>48M</td><td class='n t'>37 මි.</td></tr><tr><td class='n'>16</td><td><b>Slime Ball</b><span class='sub'>කොළ slime, දම් monster මූණ</span></td><td><span class='pill r-legendary'>Legendary</span></td><td class='n'>+1.1M</td><td class='n'>135M</td><td class='n t'>43 මි.</td></tr><tr><td class='n'>17</td><td><b>Burger</b><span class='sub'>burger layers + තල ඇට</span></td><td><span class='pill r-mythic'>Mythic</span></td><td class='n'>+2.7M</td><td class='n'>380M</td><td class='n t'>51 මි.</td></tr><tr><td class='n'>18</td><td><b>Diamond Tire</b><span class='sub'>දියමන්ති කැපුම්</span></td><td><span class='pill r-mythic'>Mythic</span></td><td class='n'>+7M</td><td class='n'>1.1B</td><td class='n t'>1 පැ. 0 මි.</td></tr><tr><td class='n'>19</td><td><b>Rainbow Candy</b><span class='sub'>දේදුනු candy</span></td><td><span class='pill r-mythic'>Mythic</span></td><td class='n'>+18M</td><td class='n'>3B</td><td class='n t'>1 පැ. 14 මි.</td></tr><tr><td class='n'>20</td><td><b>Unicorn Cloud</b><span class='sub'>pastel වලාකුළක්</span></td><td><span class='pill r-mythic'>Mythic</span></td><td class='n'>+48M</td><td class='n'>8.5B</td><td class='n t'>1 පැ. 33 මි.</td></tr><tr><td class='n'>21</td><td><b>Galaxy Tire</b><span class='sub'>දම් පාට පුංචි ග්‍රහලෝකයක් + තරු</span></td><td><span class='pill r-secret'>Secret</span></td><td class='n'>+125M</td><td class='n'>24B</td><td class='n t'>2 පැ. 0 මි.</td></tr><tr><td class='n'>22</td><td><b>Dragon Scale</b><span class='sub'>මකර කොරපොතු + කටු</span></td><td><span class='pill r-secret'>Secret</span></td><td class='n'>+330M</td><td class='n'>68B</td><td class='n t'>2 පැ. 46 මි.</td></tr><tr><td class='n'>23</td><td><b>Birthday Cake</b><span class='sub'>birthday cake: frosting, sprinkles, layers</span></td><td><span class='pill r-secret'>Secret</span></td><td class='n'>+860M</td><td class='n'>190B</td><td class='n t'>4 පැ. 26 මි.</td></tr><tr><td class='n'>24</td><td><b>Infinity Crystal</b><span class='sub'>දේදුනු crystal</span></td><td><span class='pill r-secret'>Secret</span></td><td class='n'>+2.2B</td><td class='n'>540B</td><td class='n t'>8 පැ. 41 මි.</td></tr></table></div>
+</section>
+
+<section id="pads">
+  <h2><span class="no">7</span>Training pads 7</h2>
+  <div class="tbl"><table><tr><th>Pad</th><th>Health ගුණකය</th><th>Unlock කරන්නේ</th></tr><tr><td><b>Starter Pad</b></td><td class='n'>x1</td><td>නොමිලේ</td></tr><tr><td><b>Speed Pad</b></td><td class='n'>x2</td><td>Rebirth 1ක්</td></tr><tr><td><b>Turbo Pad</b></td><td class='n'>x4</td><td>Rebirth 2ක්</td></tr><tr><td><b>Nitro Pad</b></td><td class='n'>x10</td><td>Rebirth 4ක්</td></tr><tr><td><b>Rocket Pad</b></td><td class='n'>x20</td><td>Rebirth 6ක්</td></tr><tr><td><b>Diamond</b></td><td class='n'>x40</td><td>Wins 150K (VERY OP!)</td></tr><tr><td><b>Galaxy Planet</b></td><td class='n'>x100</td><td>Wins 2.5M (BEST OVERALL!)</td></tr></table></div>
+  <p class="note">Lock වෙලා තියෙන pad එකකට යන්න බෑ (බිත්තියක් වගේ). ගේම් එකෙන් අයින් වෙද්දි pad එකක හිටියොත්, නැති වෙලාවේත් (පැය 8 දක්වා) ඒ pad එකේ වේගයෙන් 25%ක් train වෙනවා.</p>
+</section>
+
+<section id="pets">
+  <h2><span class="no">8</span>Pets සහ Eggs</h2>
+  <p>Egg stand එකක් ළඟට ගිහින් E (එකක්), R (3ක්) හෝ T (auto) ඔබන්න. ඉහළ eggs දැන් ලාභයි (Sunset, Unicorn, Volcano), Rebirth 15 ඉඳන් Volcano Eggs තෑගි ලැබෙනවා. Pets <b>3ක්</b> සවි කරන්න පුළුවන්; ඔක්කොම <b>60ක්</b> තියාගන්න පුළුවන්. Pet ගුණක එකතු වෙනවා.</p>
+  <div class="tbl"><table><tr><th>Egg</th><th>මිල</th><th>Pets (ගුණකය, අවස්ථාව)</th></tr><tr><td><b>Basic Egg</b></td><td class='n'>15</td><td>Cat x1.1 (45%), Dog x1.15 (30%), Bunny x1.25 (20%), Bear x1.5 (5%)</td></tr><tr><td><b>Grass Egg</b></td><td class='n'>120</td><td>Cow x1.4 (45%), Parrot x1.7 (30%), Fox x2.2 (20%), Tiger x3 (5%)</td></tr><tr><td><b>Sunset Egg</b></td><td class='n'>750</td><td>Flamingo x2.5 (45%), Turtle x3.2 (30%), Owl x4.5 (20%), Phoenix x7 (5%)</td></tr><tr><td><b>Unicorn Egg</b></td><td class='n'>6K</td><td>Pony x5 (50%), Unicorn x8 (35%), Pegasus x13 (15%)</td></tr><tr><td><b>Volcano Egg</b></td><td class='n'>35K</td><td>Salamander x10 (50%), Fire Bird x16 (30%), Magma Golem x26 (15%), Inferno Wolf x45 (5%)</td></tr></table></div>
+  <p>විශේෂ: <b>Sphinx</b> (x80) – Wins 2.5M, සීමිත තොග. <b>Lucky Crab</b> – Free Reward stand එකෙන් පළවෙනි පාර. <b>Dragon</b> – daily reward දවස 2.</p>
+</section>
+
+<section id="rewards">
+  <h2><span class="no">9</span>Shop, Gems සහ Rewards</h2>
+  <div class="grid2">
+    <div>
+      <h3>Wins වලින් ගන්න passes</h3>
+      <ul><li><b>x2 Health</b> – 400</li><li><b>x2 Wins</b> – 2.5K</li><li><b>Auto Roll</b> – 150</li><li><b>VERY OP! Pad</b> – 150K</li><li><b>BEST OVERALL! Pad</b> – 2.5M</li></ul>
+      <h3>Health packs (level bar එකට යටින්)</h3>
+      <p>Packs 3යි. ඒවා ඔයාගේ level එකත් එක්ක ලොකු වෙනවා: ඊළඟ level එකට ඕනෙ Health එකෙන් x1 / x5 / x20, roll 1 / 4 / 12ක Wins වලට. Max level එකටත් වඩා Health දෙනවා.</p>
+      <h3>Boxity Gems (සැබෑ මුදල්)</h3>
+      <ul><li><b>Pile of Wins</b> – 10 max-level rolls of Wins</li><li><b>Mountain of Wins</b> – 60 max-level rolls of Wins</li><li><b>Potion Bundle</b> – 3 x2 Health + 3 x2 Wins potions</li><li><b>3 Volcano Eggs</b> – The best pets in the game</li><li><b>Auto Roll</b> – Rolls for you on the Roll Zone</li><li><b>x2 Health</b> – Double every Health gain, forever</li><li><b>x2 Wins</b> – Double every roll’s Wins, forever</li><li><b>Galaxy Pad</b> – Unlocks the x100 Galaxy Pad</li></ul>
+      <p class="note warn">Gems මිල ගණන් Boxity catalog එකේ තමයි. ගේම් එක sku එක විතරයි යවන්නේ. Server webhook එකෙන් තහවුරු වුණාට පස්සෙයි දෙන්නේ.</p>
+    </div>
+    <div>
+      <h3>Free rewards</h3>
+      <ul>
+        <li><b>Ad එකක් බලලා</b>: x2 Health potion හෝ x2 Wins potion (විනාඩි 3කට වරක්, server එකෙන් තහවුරු කරලා)</li>
+        <li><b>Playtime gifts</b> (session එකකට එක වතාවක්): 3m: +10 Wins, 8m: x2 Health, 15m: Grass Egg, 25m: x2 Wins, 35m: +250 Wins, 45m: Sunset Egg, 60m: x2 Health, 90m: Unicorn Egg</li>
+        <li><b>Daily rewards</b> (දවස් 7): දවස 1: x2 Wins, දවස 2: Dragon, දවස 3: x2 Health, දවස 4: Unicorn Egg, දවස 5: x2 Health, දවස 6: x2 Wins, දවස 7: Volcano Egg</li>
+        <li><b>Free Reward stand</b>: පළවෙනි පාර Lucky Crab pet, පස්සේ හැම session එකකටම x2 Health potion</li>
+      </ul>
+      <h3>Tutorial (පියවර 5)</h3>
+      <ol><li>Hop on a training pad to gain Health</li><li>Roll your tire to earn Wins</li><li>Buy a new tire with your Wins!</li></ol>
+      <h3>Leaderboards 4</h3>
+      <p>Top Rebirths, Top Wins, Longest Roll, Top Playtime – lobby එකේ boards සහ Boxity leaderboards (server එකෙන් report කරනවා).</p>
+    </div>
+  </div>
+</section>
+
+<section id="timeline">
+  <h2><span class="no">10</span>Player කෙනෙක්ට කොච්චර වෙලාවක් යනවද</h2>
+  <p>මේ තියෙන්නේ potions, daily rewards, Gems නැති, සාමාන්‍ය නොමිලේ player කෙනෙක් වගේ සෙල්ලම් කරන bot කෙනෙක්ගේ පැය 12ක ප්‍රතිඵල. සැබෑ player කෙනෙක්ට rewards සහ pets නිසා මීට වඩා ඉක්මනින් යන්න පුළුවන්.</p>
+  <h3>Rebirths (පටන් ගත්තට පස්සේ කාලය)</h3>
+  <div class="chips"><span class='chip'><b>R1</b> 5 මි. 5 ත.</span><span class='chip'><b>R2</b> 8 මි. 26 ත.</span><span class='chip'><b>R3</b> 11 මි.</span><span class='chip'><b>R4</b> 14 මි.</span><span class='chip'><b>R5</b> 17 මි.</span><span class='chip'><b>R6</b> 20 මි.</span><span class='chip'><b>R7</b> 21 මි.</span><span class='chip'><b>R8</b> 23 මි.</span><span class='chip'><b>R9</b> 26 මි.</span><span class='chip'><b>R10</b> 29 මි.</span><span class='chip'><b>R11</b> 32 මි.</span><span class='chip'><b>R12</b> 35 මි.</span><span class='chip'><b>R13</b> 39 මි.</span><span class='chip'><b>R14</b> 43 මි.</span><span class='chip'><b>R15</b> 47 මි.</span><span class='chip'><b>R16</b> 53 මි.</span><span class='chip'><b>R17</b> 59 මි.</span><span class='chip'><b>R18</b> 1 පැ. 6 මි.</span><span class='chip'><b>R19</b> 1 පැ. 14 මි.</span><span class='chip'><b>R20</b> 1 පැ. 23 මි.</span><span class='chip'><b>R21</b> 1 පැ. 33 මි.</span><span class='chip'><b>R22</b> 1 පැ. 44 මි.</span><span class='chip'><b>R23</b> 2 පැ. 0 මි.</span><span class='chip'><b>R24</b> 2 පැ. 17 මි.</span><span class='chip'><b>R25</b> 2 පැ. 46 මි.</span><span class='chip'><b>R26</b> 3 පැ. 14 මි.</span><span class='chip'><b>R27</b> 4 පැ. 9 මි.</span><span class='chip'><b>R28</b> 5 පැ. 6 මි.</span><span class='chip'><b>R29</b> 6 පැ. 52 මි.</span><span class='chip'><b>R30</b> 9 පැ. 32 මි.</span></div>
+  <ul style="margin-top:12px">
+    <li>පළවෙනි roll එක: තත්පර ~40න් (stages 2ක් කඩනවා). Mountain Bike සහ Wooden Wheel විනාඩියක් ඇතුළත.</li>
+    <li>විනාඩි ~19දී: World 2 open වෙනවා (Wins 25K). විනාඩි ~21දී Volcano eggs, pets x56.</li>
+    <li>පැයක් ඇතුළත: Rebirth 17, Ruby Tire; Rebirth 15 දී පළවෙනි egg තෑග්ග.</li>
+    <li>පැය 2කින්: Galaxy Tire; පැය 5කින්: Cosmic Tire; පැය ~9කින්: Infinity Tire (ටයර් 24ම). පැය 12කදීත් stage 60 (The Beyond) ට ගිහින් නෑ, ඒක දිගුකාලීන ඉලක්කයක්.</li>
+  </ul>
+</section>
+
+<section id="analysis">
+  <h2><span class="no">11</span>විශ්ලේෂණය – Players හිර වෙන්නේ කොහෙද</h2>
+  <p class="note good"><b>අලුත් වෙනස්කම් (World 2, rebirth තෑගි, ලාභ eggs):</b> pets ගුණකය x8.9 සිට x95 දක්වා යනවා, Rebirth 15 පැය 1:19 සිට විනාඩි 48 දක්වා අඩු වුණා, පැය 12කදී Rebirth 21 වෙනුවට 30. මැද කොටසේ (Rebirth 16–24) rebirth එකකට විනාඩි 13–44 වෙනුවට දැන් විනාඩි 6–16යි.</p>
+  <p class="note good"><b>හොඳ දේ:</b> මුල් විනාඩි 90 තුළ හැම විනාඩි 10කටම අඩු කාලයක් ඇතුළත (බොහෝ විට විනාඩි 1–3) අලුත් දෙයක් ලැබෙනවා: අලුත් stage එකක්, ටයරයක්, egg එකක් හෝ rebirth එකක්. පළවෙනි roll එකේදීම gate කඩන හැටියි, ටයරය කැඩෙන හැටියි දෙකම පේනවා. ඒ නිසා කරන්න ඕනෙ දේ (තව Health) පැහැදිලියි. Tutorial එක පියවරෙන් පියවර ගෙනියනවා.</p>
+  <p class="note warn"><b>අවදානම් තැන්:</b></p>
+  <ul>
+    <li><b>පැය 2.5ට පස්සේ</b> (Rebirth 25+) rebirth එකකට විනාඩි 30 – පැය 2.5ක් යනවා. මේක simulator games වල සාමාන්‍යයි; daily rewards, Gems, potions සහ egg තෑගි මෙතනට වැදගත්.</li>
+    <li><b>Rebirth 2–10</b> විනාඩි 2–3කින් වෙනවා – වේගවත්. ඕනෙ නම් මුල් level curve එක ටිකක් අමාරු කරන්න පුළුවන්.</li>
+    <li><b>Pets</b>: Volcano eggs දැන් ඉක්මනින් ගන්න පුළුවන් නිසා pets ගුණකය ඉක්මනින් උපරිමයට (x95 – x135) යනවා. ඊට පස්සේ pets වලින් අලුත් ඉලක්ක අඩුයි; World 2 එකට අලුත් egg එකක් දාන්න පුළුවන්.</li>
+    <li><b>Late stages</b> (50+): Health ගොඩක් ඕනෙ නිසා දිගුකාලීන ඉලක්ක.</li>
+  </ul>
+  <h3>ඊළඟට කරන්න පුළුවන් යෝජනා</h3>
+  <ul>
+    <li>World 2 එකට විතරක් අලුත් egg එකක් / අලුත් ටයර් කිහිපයක්</li>
+    <li>Pets "Equip Best" තනියම</li>
+    <li>World 3 (World 2 ට පස්සේ තවත් ලොකු ඉලක්කයක්)</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="no">12</span>තාක්ෂණික සටහන්</h2>
+  <ul>
+    <li><b>Graphics</b>: Settings (⚙️) වල Low / Medium / High. Default <b>Low</b>. FPS අඩු වුණොත් ගේම් එක තනියම quality එක අඩු කරනවා.</li>
+    <li><b>Performance (Low)</b>: උපරිම triangles ~66K, draw calls 34 (budget 100K / 80). ටයර් වල glow halos අයින් කළා.</li>
+    <li><b>Mobile</b>: portrait සහ landscape දෙකටම UI එක හැඩගැහෙනවා; joystick + jump බොත්තම.</li>
+    <li><b>Multiplayer</b>: Colyseus server (room එකක players 8), Boxity matchmaker, login, leaderboards, Gems, ads, chat bubbles, emotes.</li>
+    <li><b>Balance වෙනස් කරන්න</b>: <code>shared/balance.js</code> (tires, pads, eggs …), stages: <code>python scripts/gen-stages.py</code>, පස්සේ <code>node scripts/balance-sim.mjs</code> එකෙන් pacing බලන්න.</li>
+  </ul>
+</section>
+</main>
+</body>
+</html>

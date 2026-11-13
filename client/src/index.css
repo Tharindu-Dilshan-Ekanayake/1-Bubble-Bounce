@@ -1,0 +1,583 @@
+@import 'tailwindcss';
+
+:root {
+  color-scheme: light;
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  /*
+   * HUD unit: one pixel of the 1920x1080 reference layout, scaled to fit the viewport
+   * and floored so touch targets stay usable on phones.
+   */
+  --px: clamp(0.3px, min(100vw / 1920, 100vh / 1080), 1.4px);
+}
+
+/*
+ * Where the HUD's blocks sit. Landscape (the 1920x1080 reference) by default; a phone
+ * held upright gets a stacked layout scaled to its width, and a short landscape phone
+ * keeps the passes clear of the jump button. Positions live here, not inline, so the
+ * media queries can move them.
+ */
+.hud-topcenter {
+  top: calc(var(--px) * 76);
+}
+.hud-stats {
+  left: calc(var(--px) * 22);
+  top: calc(var(--px) * 150);
+}
+.hud-menu {
+  left: calc(var(--px) * 18);
+  top: calc(var(--px) * 380);
+}
+.hud-passes {
+  right: calc(var(--px) * 24);
+  top: 34%;
+}
+/* The stick's resting spot and the jump button (TouchControls.jsx). */
+.touch-joy-rest {
+  top: calc(100% - 129px);
+}
+.touch-jump {
+  right: 14px;
+  bottom: 14px;
+}
+
+@media (orientation: portrait) {
+  :root {
+    /* Upright: sized to the width, as if the screen were 1000 reference px wide. */
+    --px: clamp(0.3px, min(100vw / 1000, 100vh / 1900), 1.4px);
+  }
+  .hud-topcenter {
+    top: calc(var(--px) * 96);
+  }
+  .hud-stats {
+    top: calc(var(--px) * 380);
+  }
+  .hud-menu {
+    top: calc(var(--px) * 600);
+  }
+  .hud-passes {
+    top: calc(var(--px) * 420);
+  }
+  /* Above the Health bar, which runs the whole width along the bottom. */
+  .touch-joy-rest {
+    top: calc(100% - 129px - var(--px) * 300);
+  }
+  .touch-jump {
+    bottom: calc(14px + var(--px) * 300);
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .hud-passes {
+    top: calc(var(--px) * 110);
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  background: #a6d6fb;
+}
+
+/* The R3F canvas fills its container; the HUD is absolutely positioned over it. */
+canvas {
+  display: block;
+  touch-action: none;
+}
+
+.pp-font {
+  font-family: 'Fredoka One', 'Arial Rounded MT Bold', system-ui, sans-serif;
+  letter-spacing: 0.01em;
+}
+
+/* Outlined text, see StrokeText.jsx. */
+.pp-text {
+  position: relative;
+  display: inline-block;
+  font-family: 'Fredoka One', 'Arial Rounded MT Bold', system-ui, sans-serif;
+  white-space: nowrap;
+}
+.pp-text-stroke {
+  position: absolute;
+  inset: 0;
+  color: #000;
+  -webkit-text-stroke-color: #000;
+  -webkit-text-stroke-width: 6px;
+  text-shadow: 0 0.06em 0 #000;
+  pointer-events: none;
+  user-select: none;
+}
+.pp-text-fill {
+  position: relative;
+}
+
+/* Single-element outline for small labels where a gradient isn't needed. */
+.pp-stroke {
+  font-family: 'Fredoka One', 'Arial Rounded MT Bold', system-ui, sans-serif;
+  color: #fff;
+  -webkit-text-stroke: 0.18em #000;
+  paint-order: stroke fill;
+}
+
+@keyframes pp-fly {
+  0% {
+    transform: translate(-30px, 8px) rotate(-4deg);
+  }
+  50% {
+    transform: translate(30px, -10px) rotate(4deg);
+  }
+  100% {
+    transform: translate(-30px, 8px) rotate(-4deg);
+  }
+}
+.pp-loading-disc {
+  animation: pp-fly 2.4s ease-in-out infinite;
+  filter: drop-shadow(0 8px 0 rgba(0, 0, 0, 0.25));
+}
+
+/* Chunky press feel for every HUD button. */
+.pp-btn {
+  cursor: pointer;
+  transition:
+    transform 0.08s ease-out,
+    filter 0.12s;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.pp-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.pp-btn:active:not(:disabled) {
+  transform: scale(0.93);
+}
+.pp-btn:disabled {
+  cursor: default;
+}
+
+/*
+ * The game's chunky button: a thick dark lip under the face that it presses down
+ * into, and a glossy highlight across the top. --lip is the lip's height.
+ */
+.pp-chunky {
+  --lip: calc(var(--px) * 6);
+  box-shadow:
+    0 var(--lip) 0 #111,
+    0 calc(var(--lip) + var(--px) * 4) calc(var(--px) * 6) rgba(0, 0, 0, 0.3),
+    inset 0 calc(var(--px) * -5) 0 rgba(0, 0, 0, 0.2);
+  transition:
+    transform 0.07s ease-out,
+    box-shadow 0.07s ease-out,
+    filter 0.12s;
+}
+.pp-chunky:hover:not(:disabled) {
+  transform: translateY(calc(var(--px) * -2));
+  filter: brightness(1.07) saturate(1.05);
+}
+.pp-chunky:active:not(:disabled) {
+  transform: translateY(calc(var(--lip) - var(--px) * 1));
+  box-shadow:
+    0 calc(var(--px) * 1) 0 #111,
+    inset 0 calc(var(--px) * -3) 0 rgba(0, 0, 0, 0.2);
+}
+.pp-chunky:disabled {
+  filter: saturate(0.35) brightness(0.92);
+}
+.pp-chunky > * {
+  z-index: 1;
+}
+.pp-chunky > :not(.absolute) {
+  position: relative;
+}
+.pp-chunky > .pp-gloss {
+  position: absolute;
+  z-index: 0;
+  left: 6%;
+  right: 6%;
+  top: 7%;
+  height: 42%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.1) 100%);
+  pointer-events: none;
+}
+
+@keyframes pp-panel-in {
+  from {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.03);
+    opacity: 1;
+  }
+  to {
+    transform: none;
+  }
+}
+.pp-panel-in {
+  animation: pp-panel-in 0.22s ease-out;
+}
+
+@keyframes pp-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12%);
+  }
+}
+.pp-bounce {
+  animation: pp-bounce 0.8s ease-in-out infinite;
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.3));
+}
+
+@keyframes pp-result {
+  0% {
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 0;
+  }
+  18% {
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -60%) scale(1);
+    opacity: 0;
+  }
+}
+.pp-result {
+  animation: pp-result 1.5s ease-out forwards;
+}
+
+/* A hint across the top: pops in, stays about three seconds, fades (see TopCenter.jsx). */
+@keyframes pp-hint {
+  0% {
+    transform: translateY(calc(var(--px) * -14)) scale(0.85);
+    opacity: 0;
+  }
+  8% {
+    transform: translateY(0) scale(1.06);
+    opacity: 1;
+  }
+  14% {
+    transform: scale(1);
+  }
+  85% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(calc(var(--px) * -10)) scale(0.96);
+    opacity: 0;
+  }
+}
+.pp-hint {
+  animation: pp-hint 3.4s ease-out forwards;
+}
+
+/* Hatch reveal, see HatchOverlay.jsx. */
+@keyframes pp-egg-shake {
+  0% { transform: rotate(0) scale(1); }
+  15% { transform: rotate(-6deg); }
+  30% { transform: rotate(6deg); }
+  45% { transform: rotate(-10deg); }
+  60% { transform: rotate(10deg); }
+  72% { transform: rotate(-14deg) scale(1.04); }
+  84% { transform: rotate(14deg) scale(1.08); }
+  95% { transform: rotate(0) scale(1.15); opacity: 1; }
+  100% { transform: scale(1.3); opacity: 0; }
+}
+.pp-egg {
+  animation: pp-egg-shake 1.2s ease-in both;
+}
+@keyframes pp-flash {
+  from { transform: scale(0.2); opacity: 1; }
+  to { transform: scale(1.5); opacity: 0; }
+}
+.pp-flash {
+  opacity: 0;
+  animation: pp-flash 0.45s ease-out both;
+}
+@keyframes pp-pop {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.pp-pet {
+  animation: pp-pop 0.45s ease-out both;
+}
+@keyframes pp-rays {
+  0% { transform: rotate(0deg) scale(0.4); opacity: 0; }
+  10% { opacity: 1; transform: rotate(18deg) scale(1.1); }
+  100% { transform: rotate(180deg) scale(1.1); opacity: 0.9; }
+}
+.pp-rays {
+  animation: pp-rays 3s linear both;
+  mask-image: radial-gradient(circle, #000 25%, transparent 70%);
+  -webkit-mask-image: radial-gradient(circle, #000 25%, transparent 70%);
+}
+
+/* The SLIDE! button breathes, so it reads as the thing to press. */
+/* Trophies streaming into the Wins counter at the end of a roll (RollOverlay.jsx). */
+@keyframes pp-fly {
+  0% {
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 0;
+  }
+  18% {
+    transform: translate(calc(-50% + var(--sx)), calc(-50% + var(--sy))) scale(1.15);
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(var(--px) * 65 - 50vw), calc(var(--px) * 279 - 48vh)) scale(0.45);
+    opacity: 0;
+  }
+}
+.pp-fly {
+  animation: pp-fly 1s cubic-bezier(0.55, 0, 0.75, 0.2) both;
+}
+
+/* A number that just changed (StatsPanel.jsx). */
+@keyframes pp-bump {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.pp-bump {
+  display: inline-block;
+  transform-origin: left center;
+  animation: pp-bump 0.35s ease-out;
+}
+
+/* The speed tunnel (HUD.jsx): streaks round the edges rushing outwards, centre clear. */
+.pp-tunnel {
+  inset: -15%;
+  background: repeating-conic-gradient(
+    from 0deg at 50% 50%,
+    transparent 0deg 2.6deg,
+    rgba(255, 255, 255, 0.55) 2.9deg 3.3deg,
+    transparent 3.6deg 5.1deg,
+    rgba(255, 255, 255, 0.3) 5.3deg 5.6deg,
+    transparent 5.9deg 8deg
+  );
+  -webkit-mask-image: radial-gradient(ellipse 60% 55% at 50% 50%, transparent 45%, #000 100%);
+  mask-image: radial-gradient(ellipse 60% 55% at 50% 50%, transparent 45%, #000 100%);
+  animation: pp-tunnel 0.22s linear infinite;
+}
+@keyframes pp-tunnel {
+  from {
+    transform: scale(1) rotate(0deg);
+  }
+  to {
+    transform: scale(1.12) rotate(1.4deg);
+  }
+}
+/* The blur down the sides: a soft white haze thickening towards the edges. */
+.pp-tunnel-haze {
+  background: radial-gradient(ellipse 75% 70% at 50% 50%, transparent 55%, rgba(255, 255, 255, 0.28) 85%, rgba(255, 255, 255, 0.5) 100%);
+}
+
+/*
+ * The KICK! button breathes a green glow, so it reads as the thing to press. The glow is
+ * its own layer whose opacity alone is animated - the compositor runs that without the
+ * main thread - where animating the button's own filter repainted the whole outlined
+ * button every frame for as long as you stood on the kick zone.
+ */
+@keyframes pp-pulse {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.pp-roll-btn::after {
+  content: '';
+  position: absolute;
+  inset: calc(var(--px) * -4);
+  z-index: -1;
+  border-radius: inherit;
+  box-shadow: 0 0 calc(var(--px) * 22) calc(var(--px) * 6) rgba(120, 255, 90, 0.85);
+  pointer-events: none;
+  opacity: 0;
+  will-change: opacity;
+  animation: pp-pulse 1.1s ease-in-out infinite;
+}
+
+/*
+ * A graded hit's moment (HitFlash.jsx, one card per grade): hidden until the frame loop puts
+ * .pp-perfect-on on it, which (re)starts every animation below. ~1.9 s in all.
+ */
+.pp-perfect {
+  visibility: hidden;
+}
+.pp-perfect.pp-perfect-on {
+  visibility: visible;
+}
+.pp-perfect-on .pp-perfect-flash {
+  background: radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 236, 160, 0.6) 35%, rgba(255, 160, 40, 0) 75%);
+  animation: pp-perfect-flash 0.45s ease-out forwards;
+}
+@keyframes pp-perfect-flash {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/*
+ * Painted small (60vmax) and scaled up on the GPU (RAYS_SCALE = 2.8 in the keyframes):
+ * soft rays look the same, and the gradient and mask are rasterized at an eighth of the
+ * pixels - a full-size first paint at the moment of the hit was a visible hitch.
+ */
+.pp-perfect-rays {
+  left: 50%;
+  top: 42%;
+  width: 60vmax;
+  height: 60vmax;
+  margin: -30vmax 0 0 -30vmax;
+  opacity: 0;
+  will-change: transform, opacity;
+  background: repeating-conic-gradient(from 0deg, var(--ray, rgba(255, 214, 60, 0.5)) 0deg 7deg, transparent 7deg 20deg);
+  -webkit-mask-image: radial-gradient(circle, #000 0%, #000 12%, transparent 45%);
+  mask-image: radial-gradient(circle, #000 0%, #000 12%, transparent 45%);
+}
+.pp-perfect-on .pp-perfect-rays {
+  animation: pp-perfect-rays 1.9s ease-out forwards;
+}
+@keyframes pp-perfect-rays {
+  0% {
+    opacity: 0;
+    transform: rotate(0deg) scale(1.1);
+  }
+  12% {
+    opacity: 1;
+    transform: rotate(12deg) scale(2.8);
+  }
+  70% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(70deg) scale(3.2);
+  }
+}
+.pp-perfect-stack {
+  top: 30%;
+  transform: translateX(-50%);
+}
+/* Rasterized once and then only moved and faded by the GPU while they animate. */
+.pp-perfect-title,
+.pp-perfect-badge,
+.pp-perfect-star {
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.pp-perfect-on .pp-perfect-title {
+  animation: pp-perfect-title 1.9s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+@keyframes pp-perfect-title {
+  0% {
+    opacity: 0;
+    transform: scale(3.4) rotate(-14deg);
+  }
+  10% {
+    opacity: 1;
+    transform: scale(0.88) rotate(-5deg);
+  }
+  16% {
+    transform: scale(1.1) rotate(-7deg);
+  }
+  22% {
+    transform: scale(0.97) rotate(-5deg);
+  }
+  28%,
+  34% {
+    transform: scale(1) rotate(-6deg);
+  }
+  31% {
+    transform: scale(1.04) rotate(-4deg);
+  }
+  72% {
+    opacity: 1;
+    transform: scale(1) rotate(-6deg) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.6) rotate(-6deg) translateY(-90%);
+  }
+}
+.pp-perfect-on .pp-perfect-badge {
+  animation: pp-perfect-badge 1.65s ease-out forwards;
+}
+.pp-perfect-on .pp-perfect-badge-1 {
+  animation-delay: 0.22s;
+}
+.pp-perfect-on .pp-perfect-badge-2 {
+  animation-delay: 0.34s;
+}
+@keyframes pp-perfect-badge {
+  0% {
+    opacity: 0;
+    transform: translateY(40%) scale(0.4) rotate(-4deg);
+  }
+  14% {
+    opacity: 1;
+    transform: translateY(0) scale(1.15) rotate(-4deg);
+  }
+  22% {
+    transform: scale(1) rotate(-4deg);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1) rotate(-4deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-160%) scale(0.7) rotate(-4deg);
+  }
+}
+.pp-perfect-star {
+  left: 50%;
+  top: 40%;
+}
+.pp-perfect-on .pp-perfect-star {
+  animation: pp-perfect-star 1.1s ease-out forwards;
+}
+@keyframes pp-perfect-star {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2) rotate(0deg);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.1) rotate(220deg);
+  }
+}

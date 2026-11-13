@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#2f8ff2" />
+    <title>+1 Arm Length</title>
+
+    <!-- The SDK's connection opened early, while the page is still loading: saves a DNS
+         lookup and a TLS handshake (several round trips on a phone network). Only the SDK
+         host: it's the same in every environment, unlike the API and CDN hosts, which
+         come from the told environment (bloxity/env.js) and are never written here. -->
+    <link rel="preconnect" href="https://sdk.bloxity.io" />
+
+    <!-- Boxity SDK. Exposes itself as window.Legion.SDK. Deliberately NOT async/defer:
+         Boxity's spec has it run before the game's own code - it tags every matchmaker
+         request with the player's Boxity party, so friends land in the same room (party
+         play, CrazyGames "play with friends"). It reads window.BLOXITY_ENV (set by the
+         host page; in `vite dev`, injected above this tag) to pick its environment. The
+         preconnect above opens its connection early, which is what can be won here. -->
+    <script src="https://sdk.bloxity.io/v1/legion-sdk.min.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
