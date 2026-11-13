@@ -212,13 +212,14 @@ export function RollButton() {
             radius={16}
             border={6}
             className="touch-none"
-            style={{ width: u(440), height: u(130), flexDirection: 'column' }}
+            style={{ width: u(520), height: u(140), flexDirection: 'column' }}
           >
-            <span className="flex flex-col items-center" style={{ position: 'absolute', inset: 0, justifyContent: 'center' }}>
-              <span style={{ fontSize: u(70), lineHeight: 1 }}>
+            {/* Both lines sit inside the button, the hint kept clear of the border. */}
+            <span className="flex flex-col items-center" style={{ position: 'absolute', inset: 0, justifyContent: 'center', padding: `0 ${u(18)}` }}>
+              <span style={{ fontSize: u(68), lineHeight: 1 }}>
                 <StrokeText stroke={u(12)}>{blowing ? 'LET GO!' : 'BLOW'}</StrokeText>
               </span>
-              <span style={{ fontSize: u(28), marginTop: u(4) }}>
+              <span className="whitespace-nowrap" style={{ fontSize: u(24), lineHeight: 1.15, marginTop: u(8) }}>
                 <StrokeText stroke={u(6)}>{blowing ? 'at the biggest!' : 'Hold, then bounce as far as you can!'}</StrokeText>
               </span>
             </span>
