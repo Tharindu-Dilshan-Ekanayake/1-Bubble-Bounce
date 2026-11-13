@@ -178,11 +178,16 @@ function installLifecycle(sdk) {
     gameplayStarted = true
     safeCall(game?.gameplayStart?.bind(game))
   }
-  /** Screen ads: 'panel' while a modal panel is open, 'gameplay' otherwise. */
+  /**
+   * Screen ads (the ones beside and below the game): never while you play. They show only
+   * while a modal panel is open - something the player opened - and come down with it.
+   * (Rewarded ads are separate: only ever from a "Watch ad" button, StorePanel.)
+   */
   const sync = (state) => {
     if (!state.playable) return
     start()
-    setScreen(state.panel ? 'panel' : 'gameplay')
+    if (state.panel) setScreen('panel')
+    else hideScreen()
   }
   sync(getGame())
   const unsubscribe = useGame.subscribe((state, prev) => {
