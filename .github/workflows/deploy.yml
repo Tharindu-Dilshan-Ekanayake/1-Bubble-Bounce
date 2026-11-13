@@ -108,10 +108,21 @@ jobs:
       - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-      - name: Build and push the server image
+      - name: Build the server image
         run: |
-          docker build -f server/Dockerfile -t "${{ steps.meta.outputs.image }}" .
-          docker push "${{ steps.meta.outputs.image }}"
+          # The source label links the package to this repository, which is what lets
+          # the workflow's own GITHUB_TOKEN write it (without it a push is refused with
+          # "permission_denied: write_package").
+          docker build --progress=plain \
+            --label "org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
+            -f server/Dockerfile -t "${{ steps.meta.outputs.image }}" .
+
+      - name: Push the server image
+        run: |
+          if ! docker push "${{ steps.meta.outputs.image }}"; then
+            echo "::error::Pushing to ghcr.io failed. If it says permission_denied: open github.com/${{ github.repository_owner }}?tab=packages, open the 1-bubble-bounce-server package -> Package settings -> Manage Actions access -> add this repository with the Write role (or delete the package and re-run)."
+            exit 1
+          fi
 
       - name: Roll it out on Legion
         run: |
