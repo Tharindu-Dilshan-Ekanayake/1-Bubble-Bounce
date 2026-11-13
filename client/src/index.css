@@ -28,10 +28,6 @@
   left: calc(var(--px) * 18);
   top: calc(var(--px) * 380);
 }
-.hud-passes {
-  right: calc(var(--px) * 24);
-  top: 34%;
-}
 /* The stick's resting spot and the jump button (TouchControls.jsx). */
 .touch-joy-rest {
   top: calc(100% - 129px);
@@ -39,6 +35,22 @@
 .touch-jump {
   right: 14px;
   bottom: 14px;
+}
+/* The round BLOW button: bottom right; on a touchscreen, just above the jump button. */
+.hud-blowtap {
+  right: calc(var(--px) * 40);
+  bottom: calc(var(--px) * 40);
+}
+@media (pointer: coarse) {
+  .hud-blowtap {
+    right: 10px;
+    bottom: 96px;
+  }
+}
+@media (orientation: portrait) and (pointer: coarse) {
+  .hud-blowtap {
+    bottom: calc(96px + var(--px) * 300);
+  }
 }
 
 @media (orientation: portrait) {
@@ -55,21 +67,12 @@
   .hud-menu {
     top: calc(var(--px) * 600);
   }
-  .hud-passes {
-    top: calc(var(--px) * 420);
-  }
   /* Above the Health bar, which runs the whole width along the bottom. */
   .touch-joy-rest {
     top: calc(100% - 129px - var(--px) * 300);
   }
   .touch-jump {
     bottom: calc(14px + var(--px) * 300);
-  }
-}
-
-@media (orientation: landscape) and (max-height: 500px) {
-  .hud-passes {
-    top: calc(var(--px) * 110);
   }
 }
 
@@ -580,4 +583,18 @@ canvas {
     opacity: 0;
     transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.1) rotate(220deg);
   }
+}
+
+/* The PERFECT BOUNCE hint while you bounce: a gentle beat. */
+@keyframes pp-tap-hint {
+  0%,
+  100% {
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.08);
+  }
+}
+.pp-tap-hint {
+  animation: pp-tap-hint 0.9s ease-in-out infinite;
 }

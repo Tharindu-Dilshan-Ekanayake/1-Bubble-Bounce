@@ -24,7 +24,7 @@ const bursts = []
  * without particles.
  *
  * @param {{ x: number, y: number, z: number, count?: number, speed?: number,
- *           palette?: 'confetti' | 'gold' | 'power' | 'wood' }} burst
+ *           palette?: 'confetti' | 'gold' | 'power' | 'bubble' }} burst
  */
 export function burst({ x, y, z, count = 30, speed = 7, palette = 'confetti' }) {
   bursts.push({ x, y, z, count, speed, palette })

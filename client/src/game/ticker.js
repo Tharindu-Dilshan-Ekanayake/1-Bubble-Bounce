@@ -1,5 +1,5 @@
 import { isPadUnlocked } from '@shared/logic'
-import { eggStandNear, FREE_REWARD, inRollZone, nearLaunchPosts, PAD_COUNT, padAt, padRect, portalAt, SPHINX_STAND, standAt, STAR } from '@shared/world'
+import { eggStandNear, FREE_REWARD, inRollZone, PAD_COUNT, padAt, padRect, portalAt, SPHINX_STAND, standAt, STAR } from '@shared/world'
 
 import { sfx } from '../audio/sfx'
 import { actions } from '../net/actions'
@@ -16,7 +16,6 @@ function sameZone(a, b) {
     a.padNear === b.padNear &&
     a.sphinx === b.sphinx &&
     a.rollZone === b.rollZone &&
-    a.atPosts === b.atPosts &&
     a.stand === b.stand &&
     a.egg === b.egg &&
     a.portal === b.portal &&
@@ -70,8 +69,6 @@ export function startGameTicker() {
       padNear: padAt(p.x, p.z, 1.8),
       sphinx: Math.hypot(p.x - SPHINX_STAND.x, p.z - SPHINX_STAND.z) < 5.5,
       rollZone: inRollZone(p.x, p.z),
-      // Close enough to the launch posts to grab them.
-      atPosts: nearLaunchPosts(p.x, p.z),
       stand: standAt(p.x, p.z),
       egg: egg ? egg.eggId : null,
       portal: portalAt(p.x, p.z)?.id ?? null,

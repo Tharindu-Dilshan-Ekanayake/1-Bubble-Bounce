@@ -7,6 +7,7 @@ import {
   EGGS,
   FREE_REWARD,
   GEM_PRODUCTS,
+  GOOD_BOUNCE_BREATH,
   HEALTH_PACKS,
   healthForLevel,
   hitGrade,
@@ -19,6 +20,9 @@ import {
   OFFLINE_MIN_MS,
   OFFLINE_RATE,
   PADS,
+  PERFECT_BOUNCE_BREATH,
+  PERFECT_BOUNCE_REACH,
+  PERFECT_BOUNCE_WINS,
   PETS,
   PLAYTIME_REWARDS,
   RARITIES,
@@ -32,8 +36,6 @@ import {
   rollDuration,
   SHOP,
   streakMultiplier,
-  STRETCH_REACH,
-  STRETCH_WINS,
   TIRES,
   TRAIN_INTERVAL,
   TROPHY_FIRST,
@@ -70,8 +72,8 @@ export function createProfile(id, name) {
     wins: 0,
     rebirths: 0,
     level: 1,
-    equippedTire: 'bicycle',
-    ownedTires: ['bicycle'],
+    equippedTire: 'soap',
+    ownedTires: ['soap'],
     pets: [],
     equippedPets: [],
     nextPetUid: 1,
@@ -98,7 +100,7 @@ export function createProfile(id, name) {
     /** The world you're in (index into WORLDS), and whether World 2's portal is open. */
     world: 0,
     world2Unlocked: false,
-    /** Secret Stars found, by world id ('world2': Palm Beach's). */
+    /** Secret Stars found, by world id ('world2': Coral Coast's). */
     secretStars: {},
     lastPad: -1,
     lastSeen: 0,
@@ -144,7 +146,7 @@ export function normalizeProfile(raw, id, name) {
     ? raw.equippedPets.filter((uid) => p.pets.some((pet) => pet.uid === uid)).slice(0, MAX_EQUIPPED_PETS)
     : []
   const owned = Array.isArray(raw.ownedTires) ? raw.ownedTires.filter((tireId) => tireIndex(tireId) >= 0) : []
-  p.ownedTires = owned.length ? owned : ['bicycle']
+  p.ownedTires = owned.length ? owned : ['soap']
   if (!p.ownedTires.includes(p.equippedTire)) p.equippedTire = p.ownedTires[0]
   p.stats.bestZone = Math.min(ZONES.length - 1, Math.max(0, Math.floor(p.stats.bestZone) || 0))
   p.stats.bestZone2 = Math.min(ZONES.length - 1, Math.max(0, Math.floor(p.stats.bestZone2) || 0))
@@ -172,7 +174,7 @@ export const tireById = (id) => TIRES.find((t) => t.id === id) || TIRES[0]
 export function isPadUnlocked(profile, index) {
   const pad = PADS[index]
   if (!pad) return false
-  // A world's own treadmill runs in that world only.
+  // A world's own Blow Pad works in that world only.
   if (pad.world !== undefined && (profile.world || 0) !== pad.world) return false
   if (pad.product) return Boolean(profile.passes[pad.product])
   return profile.rebirths >= pad.rebirths
@@ -252,7 +254,7 @@ export function winsMultiplier(profile, now) {
   return (profile.passes.winsX2 ? 2 : 1) * (isBoostActive(profile, 'wins', now) ? 2 : 1) * streakMultiplier(streakDays(profile, now))
 }
 
-/** Palm Beach's Secret Star, once found: x2 Power for good, in every world. */
+/** Coral Coast's Secret Star, once found: x2 Breath for good, in every world. */
 export const starMultiplier = (profile) => (profile.secretStars?.world2 ? SECRET_STAR.power : 1)
 
 /** Everything that multiplies a Health gain except the tire and where you earn it. */
@@ -291,7 +293,7 @@ function addHealth(profile, gain) {
 }
 
 export function applyTrain(profile, index, now) {
-  if (!isPadUnlocked(profile, index)) return { ok: false, error: 'Bar locked' }
+  if (!isPadUnlocked(profile, index)) return { ok: false, error: 'Pad locked' }
   profile.lastPad = index
   return { ok: true, ...addHealth(profile, padGain(profile, index, now)) }
 }
@@ -301,8 +303,14 @@ export function applyRollTick(profile, now) {
   return { ok: true, ...addHealth(profile, baseGain(profile, now)) }
 }
 
-/** One step's worth of walking round the lobby: the same gain as a roll tick. */
-export const applyWalkStep = applyRollTick
+/**
+ * One tap of BLOW (the session limits how fast): a Blow Pad's gain standing on unlocked
+ * pad `index`, your bubble's own anywhere else (`index` -1).
+ */
+export function applyBlowTap(profile, index, now) {
+  const gain = index >= 0 && isPadUnlocked(profile, index) ? padGain(profile, index, now) : baseGain(profile, now)
+  return { ok: true, ...addHealth(profile, gain) }
+}
 
 /** Rebirth: +1 rebirth; Health and levels reset (Wins, tires and pets stay). */
 export function applyRebirth(profile) {
@@ -391,25 +399,23 @@ export function baseRollWins(distance, world = 0) {
 export const rollWinsAt = (health, world = 0) => baseRollWins(rollOutcome(health).distance, world)
 
 /**
- * A kick down the field. Health is not consumed. Returns everything the client needs
- * to replay it locally: distance, duration, the wall that stopped it, the Wins earned
- * (trophy positions follow from the distance) and any zone reached for the first time.
- * `accuracy` is where the timing meter was stopped (0-1, see HIT_GRADES): its grade
- * decides how far the ball flies (hitReach: half as far for a WEAK kick, half as far
- * again for a PERFECT one) and multiplies the Wins (`bonus`). The Wins are what the
- * kick's Power is worth - the yards a plain kick would fly - times that bonus, never
- * the extra yards themselves: further out every yard pays more, so paying for them
- * would multiply a PERFECT kick's Wins dozens of times over late in the game. Without
- * the meter (Auto Kick) the kick is a plain x1 kick.
+ * A bounce down the valley. Breath is not consumed. Returns everything the client needs
+ * to replay it locally: distance, duration, the Wins earned (trophy positions follow
+ * from the distance) and any zone reached for the first time. `accuracy` is where the
+ * blow meter was stopped (0-1, see HIT_GRADES): its grade decides how far the bubble
+ * goes (hitReach: half as far for a WEAK one, half as far again for a PERFECT one) and
+ * multiplies the Wins (`bonus`). The Wins are what the bounce's Breath is worth - the
+ * metres a plain bounce would go - times that bonus, never the extra metres themselves:
+ * further out every metre pays more, so paying for them would multiply a PERFECT
+ * bounce's Wins dozens of times over late in the game. Without the meter (Auto Bounce)
+ * it's a plain x1 bounce.
  */
-export function applyRoll(profile, now, accuracy = null, bonus = 1, stretch = 0) {
-  // `stretch` (0-1): how much of the 40 m stretch lane you'd walked back - further and richer.
-  const pulled = Math.min(1, Math.max(0, Number(stretch) || 0))
-  const outcome = rollOutcome(profile.health, hitReach(accuracy) * (1 + STRETCH_REACH * pulled))
+export function applyRoll(profile, now, accuracy = null, bonus = 1) {
+  const outcome = rollOutcome(profile.health, hitReach(accuracy))
   const distance = Math.round(outcome.distance * 10) / 10
   const grade = hitGrade(accuracy)
   // `bonus`: the session's own multipliers (a PERFECT combo, friends in the server).
-  const multiplier = winsMultiplier(profile, now) * (grade ? grade.bonus : 1) * Math.max(1, Number(bonus) || 1) * (1 + STRETCH_WINS * pulled)
+  const multiplier = winsMultiplier(profile, now) * (grade ? grade.bonus : 1) * Math.max(1, Number(bonus) || 1)
   const world = profile.world
   const worth = Math.round(rollReach(profile.health) * 10) / 10
   const wins = Math.max(1, Math.round(baseRollWins(worth, world) * multiplier))
@@ -444,6 +450,41 @@ export function applyRoll(profile, now, accuracy = null, bonus = 1, stretch = 0)
     duration,
     cooldown: duration + ROLL_RECOVERY,
   }
+}
+
+/**
+ * A tap of the bubble's touch-down, already judged and checked by the session
+ * (balance PERFECT_BOUNCE_*). `bounce` is the bounce under way: `{ distance, baseWins,
+ * extra }` - its distance as launched, the Wins it paid, and the metres PERFECT BOUNCEs
+ * have added so far. A PERFECT one carries the bubble PERFECT_BOUNCE_REACH of the
+ * distance further (counted for your best distance, and paying the prize of any stage it
+ * reaches for the first time), pays PERFECT_BOUNCE_WINS of its Wins and
+ * PERFECT_BOUNCE_BREATH gains of Breath; a GOOD one, GOOD_BOUNCE_BREATH gains. Returns
+ * what happened: `{ grade, add, distance, wins, prize, discovered, breath }` (`breath` is
+ * addHealth's result, for the session to report as a gain).
+ */
+export function applyBounceTap(profile, bounce, grade, now) {
+  const perfect = grade === 'perfect'
+  const breath = addHealth(profile, baseGain(profile, now) * (perfect ? PERFECT_BOUNCE_BREATH : GOOD_BOUNCE_BREATH))
+  if (!perfect) return { ok: true, grade, add: 0, distance: bounce.distance + bounce.extra, wins: 0, prize: 0, discovered: [], best: false, breath }
+  const add = Math.round(bounce.distance * PERFECT_BOUNCE_REACH * 10) / 10
+  const distance = Math.round((bounce.distance + bounce.extra + add) * 10) / 10
+  const wins = Math.max(1, Math.round(bounce.baseWins * PERFECT_BOUNCE_WINS))
+  const world = profile.world
+  const bestKey = world === 1 ? 'bestZone2' : 'bestZone'
+  const zone = zoneIndexAt(distance)
+  const discovered = []
+  let prize = 0
+  for (let i = profile.stats[bestKey] + 1; i <= zone; i += 1) {
+    discovered.push(i)
+    prize += WORLD_ZONES[world][i].discover
+  }
+  const best = distance > profile.stats.bestDistance
+  profile.wins += wins + prize
+  profile.stats.totalWins += wins + prize
+  profile.stats.bestDistance = Math.max(profile.stats.bestDistance, distance)
+  profile.stats[bestKey] = Math.max(profile.stats[bestKey], zone)
+  return { ok: true, grade, add, distance, wins, prize, discovered, best, breath }
 }
 
 /** Wins (before multipliers) of a roll at your max level: what packs and skips cost in. */
@@ -523,9 +564,9 @@ export function skipRebirth(profile) {
 // --- Worlds -------------------------------------------------------------------------
 
 /**
- * Steps through the world portal: from World 1 into Palm Beach (opening it for good the
- * first time you have the rebirths and hold the Wins - they aren't spent), or from Palm
- * Beach back home.
+ * Steps through the world portal: from World 1 into Coral Coast (opening it for good the
+ * first time you have the rebirths and hold the Wins - they aren't spent), or from Coral
+ * Coast back home.
  */
 export function usePortal(profile) {
   if (profile.world === 1) {
@@ -545,7 +586,7 @@ export function usePortal(profile) {
 
 export function buyTire(profile, tireId) {
   const tire = TIRES.find((t) => t.id === tireId)
-  if (!tire) return { ok: false, error: 'Unknown arms' }
+  if (!tire) return { ok: false, error: 'Unknown bubble' }
   if (profile.ownedTires.includes(tireId)) return equipTire(profile, tireId)
   const previous = TIRES[tireIndex(tireId) - 1]
   if (previous && !profile.ownedTires.includes(previous.id)) {
@@ -559,7 +600,7 @@ export function buyTire(profile, tireId) {
 }
 
 export function equipTire(profile, tireId) {
-  if (!profile.ownedTires.includes(tireId)) return { ok: false, error: 'You don’t own those arms' }
+  if (!profile.ownedTires.includes(tireId)) return { ok: false, error: 'You don’t own that bubble' }
   profile.equippedTire = tireId
   return { ok: true, equipped: true, tireId }
 }
@@ -598,7 +639,7 @@ export function hatchEgg(profile, eggId, count = 1, { paid = 'wins', rand = Math
   const egg = EGGS[eggId]
   if (!egg) return { ok: false, error: 'Unknown egg' }
   // A world's own egg hatches in that world only (eggs from rewards included).
-  if (egg.world !== undefined && (profile.world || 0) !== egg.world) return { ok: false, error: 'Hatches in Palm Beach only!' }
+  if (egg.world !== undefined && (profile.world || 0) !== egg.world) return { ok: false, error: 'Hatches in Coral Coast only!' }
   if (profile.pets.length + count > MAX_PET_INVENTORY) return { ok: false, error: 'Pet inventory full!' }
   if (paid === 'wins') {
     if (!egg.cost.wins) return { ok: false, error: 'This egg is premium only' }
@@ -835,7 +876,7 @@ export function advanceTutorial(profile, event) {
 
 /** Awards a badge once. Returns the badge if newly awarded. */
 /**
- * Finds Palm Beach's Secret Star (the caller checks the player is at it, in Palm Beach).
+ * Finds Coral Coast's Secret Star (the caller checks the player is at it, in Coral Coast).
  * Once only; false if it was already found.
  */
 export function claimSecretStar(profile) {

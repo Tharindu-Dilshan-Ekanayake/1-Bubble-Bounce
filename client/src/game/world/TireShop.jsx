@@ -1,12 +1,12 @@
 import { useFrame } from '@react-three/fiber'
 import { useEffect, useMemo, useRef } from 'react'
-import { Color, Euler, Matrix4, Quaternion, Vector3 } from 'three'
+import { Color, Matrix4, Quaternion, Vector3 } from 'three'
 
 import { RARITIES, TIRES } from '@shared/balance'
 import { SHOP_STAGES, STAND_SIZE, TIRE_STANDS } from '@shared/world'
 
 import { useGame } from '../../store/game'
-import { createArmDisplayMesh, disposeArmDisplayMesh } from '../armStyles'
+import { createBubbleDisplay } from '../bubbles'
 import { BlockSet, disposeBlocks } from '../blocks'
 import { createGlowInstances, disposeGlow } from '../glow'
 import { standLabelSpec, standState } from '../labels/lobbyLabels'
@@ -23,20 +23,17 @@ const STAND_COLORS = {
 }
 
 const _m = new Matrix4()
-const _q = new Quaternion()
-const _e = new Euler()
 const _p = new Vector3()
-const _s = new Vector3()
 const _halo = new Vector3()
 const _haloQ = new Quaternion()
 const _haloS = new Vector3()
 
-/** Height of a stand's glowing cap above its pad; the arm floats over it. */
+/** Height of a stand's glowing cap above its pad; the bubble floats over it. */
 const CAP_TOP = 1.12
-/** Showroom arms' scale: a flexed arm about 2.3 m tall. */
-const SHOWN_ARM = 1.1
-/** How high an arm's middle floats over its stand: clear of the cap. */
-const HOVER = CAP_TOP + SHOWN_ARM * 1.15 + 0.35
+/** Showroom bubbles' radius: about 1.9 m across. */
+const SHOWN_BUBBLE = 0.95
+/** How high a bubble's middle floats over its stand: clear of the cap. */
+const HOVER = CAP_TOP + SHOWN_BUBBLE + 0.45
 
 /**
  * Display stands, all in one block set. The first TIRE_STANDS.length blocks are the
@@ -56,13 +53,13 @@ function buildStands() {
       set.addOn(x, y - 0.1, z + side * e, slab + 0.5, 0.45, 0.3, '#c4ccd8', STYLE.SMOOTH)
       set.addOn(x + side * e, y - 0.1, z, 0.3, 0.45, slab + 0.2, '#c4ccd8', STYLE.SMOOTH)
     }
-    // A glowing square ring on the stand in the arms' own colour.
+    // A glowing square ring on the stand in the bubble's own colour.
     const glow = tireGlow(id)
     for (const side of [-1, 1]) {
       set.addOn(x, y + 0.2, z + side * 1.25, 2.68, 0.06, 0.18, glow, STYLE.GLOW)
       set.addOn(x + side * 1.25, y + 0.2, z, 0.18, 0.06, 2.32, glow, STYLE.GLOW)
     }
-    // Low pedestal with a cap in the arms' base colour.
+    // Low pedestal with a cap in the bubble's colour.
     set.addOn(x, y + 0.2, z, 1.1, 0.7, 1.1, '#f4f7fb', STYLE.SMOOTH)
     set.addOn(x, y + 0.9, z, 1.5, CAP_TOP - 0.9, 1.5, tireRim(id), STYLE.GLOW)
   }
@@ -78,10 +75,11 @@ function buildStands() {
 }
 
 /**
- * The arm shop: twenty-four display stands on the two showroom stages, each with a pair
- * of arms - one flexing arm, painted as those arms (armStyles.js) - floating above it,
- * turning slowly like a trophy on a turntable and flexing a little. Stands recolour and
- * their labels rewrite as you buy and equip. Three draw calls: stands, arms, halos.
+ * The Bubble Shop: twenty-four display stands on the two showroom stages, each with its
+ * bubble - every one a different shape and film (bubbles.js) - floating above it, turning
+ * slowly like a trophy on a turntable and bobbing (in the vertex shader: the bubbles never
+ * move on the CPU). Stands recolour and their labels rewrite as you buy and equip. Three
+ * draw calls: stands, bubbles, halos.
  */
 export function TireShop() {
   // As a string: the profile is a fresh copy after every update (a launch, a rep...).
@@ -94,11 +92,11 @@ export function TireShop() {
   const assets = useMemo(() => {
     const stands = buildStands()
     const count = TIRES.length
-    // Every showroom arm, in one draw call.
-    const balls = createArmDisplayMesh(count)
-    TIRES.forEach((tire, i) => balls.setArm(i, tire.id))
-    balls.count = count
-    // A soft glow behind each arm in its rarity's colour: the rarer, the brighter it reads.
+    // Every showroom bubble, merged into one mesh: one draw call.
+    const balls = createBubbleDisplay(
+      TIRE_STANDS.map((stand) => ({ id: TIRES[stand.index].id, x: stand.x, y: stand.y + HOVER, z: stand.z, scale: SHOWN_BUBBLE })),
+    )
+    // A soft glow behind each bubble in its rarity's colour: the rarer, the brighter it reads.
     const halos = createGlowInstances(count, 0.45)
     TIRES.forEach((tire, i) => halos.setColorAt(i, new Color(RARITIES[tire.rarity]?.color ?? '#ffffff')))
     halos.count = count
@@ -109,7 +107,8 @@ export function TireShop() {
     () => () => {
       disposeBlocks(assets.stands)
       disposeGlow(assets.halos)
-      disposeArmDisplayMesh(assets.balls)
+      assets.balls.geometry.dispose()
+      assets.balls.material.dispose()
     },
     [assets],
   )
@@ -128,20 +127,13 @@ export function TireShop() {
 
   useFrame((state) => {
     const halos = halosRef.current
-    const balls = ballsRef.current
-    if (!halos || !balls) return
-    const t = state.clock.elapsedTime
+    if (!halos) return
     for (const stand of TIRE_STANDS) {
-      _p.set(stand.x, stand.y + HOVER + Math.sin(t * 1.6 + stand.index) * 0.15, stand.z)
-      // Turning round on the spot, flexing: a squeeze of the bicep every couple of seconds.
-      const flex = Math.max(0, Math.sin(t * 2.2 + stand.index)) * 0.06
-      _q.setFromEuler(_e.set(0.08, t * 0.6 + stand.index * 0.7, 0, 'YXZ'))
-      balls.setMatrixAt(stand.index, _m.compose(_p, _q, _s.set(SHOWN_ARM * (1 + flex), SHOWN_ARM * (1 - flex * 0.5), SHOWN_ARM * (1 + flex))))
-      // Set back behind the arm as seen from the camera, so it glows round it, not over it.
+      _p.set(stand.x, stand.y + HOVER, stand.z)
+      // Set back behind the bubble as seen from the camera, so it glows round it, not over it.
       _halo.copy(_p).sub(state.camera.position).normalize().multiplyScalar(1.6).add(_p)
-      halos.setMatrixAt(stand.index, _m.compose(_halo, _haloQ, _haloS.setScalar(SHOWN_ARM * 3.8)))
+      halos.setMatrixAt(stand.index, _m.compose(_halo, _haloQ, _haloS.setScalar(SHOWN_BUBBLE * 4.4)))
     }
-    balls.instanceMatrix.needsUpdate = true
     halos.instanceMatrix.needsUpdate = true
   })
 

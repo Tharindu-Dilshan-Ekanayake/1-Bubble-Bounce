@@ -22,7 +22,7 @@ function TutorialBanner({ step }) {
   const onZone = useGame((s) => s.zone.rollZone)
   let text = current.text
   if (current.health) text += ` (${formatNumber(Math.min(health, current.health))}/${formatNumber(current.health)})`
-  if (current.event === 'roll' && onZone) text = 'Pull BACK to stretch, then let go of the stick!'
+  if (current.event === 'roll' && onZone) text = 'Hold BLOW - let go when the bubble is BIGGEST!'
   return (
     <div
       className="flex items-center"
@@ -66,13 +66,13 @@ function GoalBanner() {
   let progress = null
   let panel = null
   if (isMaxLevel(profile)) {
-    text = `REBIRTH READY! Rebirth for x${rebirthMultiplier(profile.rebirths + 1)} Power`
+    text = `REBIRTH READY! Rebirth for x${rebirthMultiplier(profile.rebirths + 1)} Breath`
     panel = 'rebirth'
   } else {
     const next = nextTire(profile)
     if (next) {
       const wins = Math.max(0, profile.wins - pending)
-      text = wins >= next.cost ? `You can buy ${next.name}! Visit the Arm Shop` : `Next arms: ${next.name}`
+      text = wins >= next.cost ? `You can buy the ${next.name}! Visit the Bubble Shop` : `Next bubble: ${next.name}`
       progress = Math.min(1, wins / Math.max(1, next.cost))
       if (wins < next.cost) text += ` (${formatNumber(wins)}/${formatNumber(next.cost)} Wins)`
     } else {

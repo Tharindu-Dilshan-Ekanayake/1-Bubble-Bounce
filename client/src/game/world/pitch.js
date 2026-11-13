@@ -84,9 +84,9 @@ export function footballNumbers() {
  * in the image (its top is north at yaw 0), `yaw` turns it to read from where you'd see it.
  */
 export const DIRECTIONS = [
-  { text: 'LAUNCH', arrow: 'up', x: 0, z: SPAWN.z - 13, width: 8, yaw: 0 },
-  { text: 'PULL-UPS', arrow: 'right', x: 12, z: SPAWN.z + 3, width: 7, yaw: 0 },
-  { text: 'ARMS', arrow: 'left', x: -12, z: SPAWN.z - 13, width: 5.5, yaw: 0 },
+  { text: 'BOUNCE', arrow: 'up', x: 0, z: SPAWN.z - 13, width: 8, yaw: 0 },
+  { text: 'BLOW PADS', arrow: 'right', x: 12, z: SPAWN.z + 3, width: 7, yaw: 0 },
+  { text: 'BUBBLES', arrow: 'left', x: -12, z: SPAWN.z - 13, width: 6.5, yaw: 0 },
   { text: 'PETS', arrow: 'left', x: -12, z: SPAWN.z + 5, width: 5.5, yaw: 0 },
 ]
 /** A stencil's height for its width (its atlas cell's shape). */
@@ -94,7 +94,7 @@ export const DIRECTION_ASPECT = 0.22
 
 /** The end zones' lettering: [text, centre z, yaw (reads from the field)]. */
 export const END_ZONE_TEXT = [
-  { text: '+1 ARM LENGTH', z: 30.4, width: 26, yaw: Math.PI },
+  { text: '+1 BUBBLE HOP', z: 30.4, width: 26, yaw: Math.PI },
   // (Its words are the venue's: BACKYARD, or PALM BEACH - sceneStyle VENUES.)
   { text: 'BACKYARD', z: -29.2, width: 20, yaw: 0 },
 ]

@@ -29,24 +29,25 @@ import { createToyInstances, PropBuilder } from '../blocks'
 import { spawnScattered } from '../fx/popups'
 import { sharedMaterials, STYLE } from '../materials'
 import { runtime } from '../runtime'
-import { activeWorld, perWorld, showLobbySky, zones } from '../worldLook'
+import { activeWorld, showLobbySky, zones } from '../worldLook'
 import { tireGlow } from '../tire'
 import { writeDistance, writeSpeed, writeZone } from './hudLink'
 import FireBurst from '../fx/FireBurst'
 import Impact from './Impact'
 import Lane from './Lane'
-import { trackPoint } from './path'
+import { KICK_HIT, trackPoint } from './path'
 import RollFX from './RollFX'
 import { linkPrograms } from '../linkPrograms'
 import { advanceRoll, roll } from './rollControl'
 import SpeedBlur from './SpeedBlur'
 import TireTrail from './TireTrail'
-import { ZONE_THEMES } from './themes'
+import BounceRing from './BounceRing'
+import { stageLooks } from './stageLooks'
 import Weather from './Weather'
 
 const MAX_TROPHIES = 16
 const STREAKS = 36
-/** Trophies float this high over the kick's line. */
+/** Trophies float this high over the valley's middle. */
 const TROPHY_HEIGHT = 3.4
 /**
  * Frame-loop priority: before every other system, so the chase camera has moved before
@@ -63,6 +64,11 @@ const _look = new Vector3()
 const _cam = new Vector3()
 /** The chase camera's smoothed position, before any shake is added on top. */
 const camBase = new Vector3()
+/**
+ * How high the camera rides over the valley: the bubble's height, smoothed, so it follows
+ * the big arcs up and down without jolting on every little bounce.
+ */
+let camAir = 0
 const _up = new Vector3(0, 1, 0)
 /** Stable vector for runtime.flightFocus (the scratch ones are reused mid-frame). */
 const tireFocus = new Vector3()
@@ -148,18 +154,11 @@ const streakFragmentShader = /* glsl */ `
   }
 `
 
-const zoneNameGradients = perWorld((zs) =>
-  zs.map((z) => {
-    const [a, b, c] = ZONE_THEMES[z.theme].name
-    return `linear-gradient(180deg, ${a} 0%, ${b} 45%, ${c} 100%)`
-  }),
-)
 /** Sideways, in metres, the camera starts for the launch (and swings back from), to see the stretch side on. */
-const KICK_CAM_SIDE = 3
+const KICK_CAM_SIDE = 4.5
 /** The launch camera's start: behind you, up, and the height it looks at. */
-const KICK_CAM_BEHIND = 4.6
-const KICK_CAM_HEIGHT = 2.4
-const KICK_LOOK_HEIGHT = 0.6
+const KICK_CAM_BEHIND = 7.5
+const KICK_CAM_HEIGHT = 3.4
 const smoothstep = (a, b, x) => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
   return t * t * (3 - 2 * t)
@@ -177,10 +176,10 @@ function createTrophyGeometry() {
 }
 
 /**
- * Lazily loaded: the runway and its trophies, the speed lines and the chase camera while
- * you fly (your avatar flies itself: Player.jsx; other players' fly theirs: remote/).
- * While nobody is launching it still streams the first stretch, which is the runway you
- * see from the lobby.
+ * Lazily loaded: the valley and its trophies, the speed lines and the chase camera while
+ * you bounce (your avatar rides in your bubble: Player.jsx, BubbleRiders.jsx; other
+ * players' ride theirs: remote/). While nobody is bouncing it still streams the first
+ * stretch, which is the valley you see from the lobby.
  */
 export default function Roll() {
   const camera = useThree((s) => s.camera)
@@ -281,7 +280,9 @@ export default function Roll() {
         tally.pending = 0
         tally.shownAt = 0
         zoneShown.current = -1
+        camAir = roll.air
       }
+      camAir += (roll.air - camAir) * (1 - Math.exp(-2.2 * delta))
       focus = Math.max(0, roll.meter)
       speed = roll.speed
       const p = roll.position
@@ -296,7 +297,7 @@ export default function Roll() {
           if (settings.particles) burst({ x: p.x, y: p.y + 2, z: p.z - 6, count: 44, palette: 'confetti', speed: 10 })
         }
         zoneShown.current = zi
-        writeZone(zi, zones()[zi].name, zoneNameGradients()[zi])
+        writeZone(zi, zones()[zi].name, stageLooks()[zi].nameGradient)
       }
 
       // The sound of the flight, swelling with its speed, gone once it stops.
@@ -329,10 +330,13 @@ export default function Roll() {
           // For the kick it starts low, close and to one side, looking at the player's
           // kicking foot and the ball on its tee, so you see them meet; then it swings in
           // behind and pulls back as the ball goes.
-          const off = smoothstep(0.55, 1.5, elapsed)
-          const behind = KICK_CAM_BEHIND + (8.2 - KICK_CAM_BEHIND) * off + Math.min(speed, 300) * 0.006
-          trackPoint(roll.meter - behind, 0, KICK_CAM_HEIGHT + (4 - KICK_CAM_HEIGHT) * off + roll.air, _cam)
-          const easingIn = elapsed < 1.1
+          // Held wide and to one side while you jump up onto the bubble and sink in, then
+          // swinging in behind as it leaps away.
+          const off = smoothstep(KICK_HIT * 0.8, KICK_HIT + 0.9, elapsed)
+          const climb = (1 - off) * Math.max(0, p.y - 0.9) * 0.4
+          const behind = KICK_CAM_BEHIND + (10.5 - KICK_CAM_BEHIND) * off + Math.min(speed, 300) * 0.006
+          trackPoint(roll.meter - behind, 0, KICK_CAM_HEIGHT + (5.2 - KICK_CAM_HEIGHT) * off + camAir + climb, _cam)
+          const easingIn = elapsed < KICK_HIT + 0.4
           const kIn = easingIn ? 1 - Math.exp(-8 * delta) : 1
           const kx = easingIn ? kIn : 1 - Math.exp(-5 * delta)
           camBase.set(
@@ -340,7 +344,9 @@ export default function Roll() {
             camBase.y + (_cam.y - camBase.y) * kIn,
             camBase.z + (_cam.z - camBase.z) * kIn,
           )
-          trackPoint(roll.meter - 0.6 + 12.6 * off, p.x * 0.85, KICK_LOOK_HEIGHT + (1.6 - KICK_LOOK_HEIGHT) * off + roll.air * 0.8, _look)
+          // Looking between you and the bubble while you get in; down the valley after.
+          const launchLook = (p.y + roll.bubblePos.y) * 0.5
+          trackPoint(roll.meter - 0.6 + 12.6 * off, p.x * 0.85, launchLook * (1 - off) + (1.6 + camAir * 0.75 + (roll.air - camAir) * 0.5) * off, _look)
         }
         // Shake: a rumble that grows with speed, and a jolt on landings, wall hits and a
         // PERFECT hit's blast-off.
@@ -349,14 +355,14 @@ export default function Roll() {
         const sinceBlast = roll.freezeAt ? now - roll.freezeAt - roll.freezeMs : -1
         const amp =
           (roll.phase === 'ride' && !roll.crashed ? Math.min(1, speed / 220) * SPEED_SHAKE : 0) +
-          (sinceLand < LAND_SHAKE_MS * 3 ? LAND_SHAKE * Math.exp(-sinceLand / LAND_SHAKE_MS) : 0) +
+          (sinceLand < LAND_SHAKE_MS * 3 ? LAND_SHAKE * roll.shakePower * Math.exp(-sinceLand / LAND_SHAKE_MS) : 0) +
           (sinceBlast >= 0 && sinceBlast < 700 ? 0.9 * roll.freezePower * Math.exp(-sinceBlast / 200) : 0)
         camera.position.set(camBase.x + (Math.random() - 0.5) * amp, camBase.y + (Math.random() - 0.5) * amp, camBase.z)
         camera.lookAt(_look)
         // The view widens with speed: the rush of going fast.
         // ...and punches wider for a moment on every wall smashed.
         const sinceHit = now - roll.hitAt
-        const punch = !roll.crashed && sinceHit < 600 ? 7 * Math.exp(-sinceHit / 140) : 0
+        const punch = !roll.crashed && sinceHit < 600 ? 5 * roll.shakePower * Math.exp(-sinceHit / 140) : 0
         // A good hit: the lens zooms in while time stands still, then punches wider as
         // the ball blasts off - quickly, not eased like the rest. All as strong as the hit.
         const sinceFreeze = roll.freezeAt ? now - roll.freezeAt : Infinity
@@ -395,7 +401,7 @@ export default function Roll() {
       // the visual receipt. At speed you pass dozens a second, so they're summed into
       // one popup at most every TROPHY_POPUP_MS.
       const tally = trophyTally.current
-      while (tally.next <= Math.min(roll.meter, roll.distance)) {
+      while (tally.next <= Math.min(roll.meter, roll.distance + roll.extra)) {
         tally.pending += trophyValue(tally.next, activeWorld())
         tally.next += TROPHY_SPACING
       }
@@ -470,6 +476,7 @@ export default function Roll() {
       <primitive ref={streakRef} object={assets.streakMesh} />
       <RollFX />
       <TireTrail />
+      <BounceRing />
       {rolling && motionBlur > 0 && <SpeedBlur samples={motionBlur} antialias={antialias} />}
     </group>
   )

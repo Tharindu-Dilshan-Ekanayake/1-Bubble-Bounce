@@ -1,7 +1,7 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "Authoritative game server for +1 Arm Length: Colyseus rooms, persistence and Bloxity auth.",
+  "description": "Authoritative game server for +1 Bubble Hop: Colyseus rooms, persistence and Bloxity auth.",
   "main": "src/server.js",
   "scripts": {
     "start": "node --env-file-if-exists=.env src/server.js",

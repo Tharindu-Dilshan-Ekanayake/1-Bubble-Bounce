@@ -31,6 +31,8 @@ const PALETTES = {
   confetti: ['#ff3b5c', '#ffd21f', '#4ef05a', '#2fc6ff', '#b15cff', '#ffffff'].map((c) => new Color(c)),
   gold: ['#ffe45c', '#ffc21f', '#ff9a12', '#ffffff'].map((c) => new Color(c)),
   power: ['#ffd84a', '#ffa21c', '#ffffff'].map((c) => new Color(c)),
+  // A bubble popping: droplets of soap film in pale rainbow tints.
+  bubble: ['#bfefff', '#ffd6f6', '#ffffff', '#c8ffe8', '#fff3b8', '#d8c8ff'].map((c) => new Color(c)),
   /** Splinters and sawdust from a smashed wooden wall. */
   wood: ['#c98f52', '#a8743f', '#e8c48a', '#8a5a32', '#fff3d6'].map((c) => new Color(c)),
 }

@@ -31,7 +31,9 @@ import ShaderWarmup from './ShaderWarmup'
 import { FOG, SKY } from './sceneStyle'
 import Sky from './Sky'
 import World from './world/World'
-import LaunchReach from './world/LaunchReach'
+import AmbientBubbles from './world/AmbientBubbles'
+import BubbleRiders from './BubbleRiders'
+import Puffs from './fx/Puffs'
 import { showLobbySky } from './worldLook'
 
 // r3f-perf is a dev-only overlay (?perf in the URL). The DEV check is static, so the
@@ -250,7 +252,8 @@ export function GameScene({ onReady }) {
         <WorldSky world={world} />
         <Lighting />
         <World />
-        <LaunchReach />
+        <AmbientBubbles />
+        <BubbleRiders />
         <WorldLabels />
         <TireShop />
         <EggDisplays />
@@ -259,6 +262,7 @@ export function GameScene({ onReady }) {
         <Leaderboards />
         <TutorialArrows />
         <Particles />
+        <Puffs />
         <SphinxShowcase />
         <RewardCrab />
         <Pets />

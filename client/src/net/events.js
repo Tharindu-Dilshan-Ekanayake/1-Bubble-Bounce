@@ -4,7 +4,7 @@ import { formatNumber } from '@shared/format'
 import { sfx } from '../audio/sfx'
 import { burst, queueTrainFx } from '../game/fx/fxQueue'
 import { runtime } from '../game/runtime'
-import { beginRoll, roll } from '../game/roll/rollControl'
+import { beginRoll, confirmBounceBoost, roll } from '../game/roll/rollControl'
 import { getGame } from '../store/game'
 import { fadeThrough } from '../ui/fade'
 import { refreshRemoteWorlds } from './remotePlayers'
@@ -58,8 +58,14 @@ export function handleServerEvent(type, payload) {
       break
 
     case 'roll': {
-      // (How well you let go shows as you shoot past the posts: rollControl.)
+      // (How well you let go shows as the bubble leaps away: rollControl.)
       beginRoll(payload)
+      break
+    }
+    case 'bounceBoost': {
+      // A PERFECT or GOOD BOUNCE counted: the result shows the extra metres and Wins.
+      game.boostRoll(payload)
+      confirmBounceBoost(payload)
       break
     }
 
@@ -72,7 +78,7 @@ export function handleServerEvent(type, payload) {
     case 'streak':
       // Played past midnight: the streak's next day starts now.
       sfx.wins()
-      game.showToast(`DAY ${payload.days} STREAK! x${payload.multiplier.toFixed(1)} Wins on every launch`)
+      game.showToast(`DAY ${payload.days} STREAK! x${payload.multiplier.toFixed(1)} Wins on every bounce`)
       break
 
     case 'pack':
@@ -104,7 +110,7 @@ export function handleServerEvent(type, payload) {
       sfx.wins()
       sfx.levelUp()
       burst({ ...atPlayer(2), count: 70, palette: 'gold', speed: 10 })
-      game.showToast('SECRET STAR FOUND! x2 POWER FOREVER!')
+      game.showToast('SECRET STAR FOUND! x2 BREATH FOREVER!')
       break
     }
 
@@ -117,7 +123,7 @@ export function handleServerEvent(type, payload) {
       const world = WORLDS[payload.world]
       game.showToast(
         payload.world === 1
-          ? `WELCOME TO ${world.name.toUpperCase()}! x${world.wins} Wins on every launch!${payload.first ? ' A Secret Star is hidden here...' : ''}`
+          ? `WELCOME TO ${world.name.toUpperCase()}! x${world.wins} Wins on every bounce!${payload.first ? ' A Secret Star is hidden here...' : ''}`
           : `Back in ${world.name}!`,
       )
       break

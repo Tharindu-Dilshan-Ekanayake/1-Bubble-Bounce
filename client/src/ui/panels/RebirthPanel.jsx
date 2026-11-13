@@ -73,9 +73,9 @@ export function RebirthPanel() {
           <StrokeText stroke={u(11)}>After Rebirth</StrokeText>
         </div>
 
-        <StatCard kind="health" text={`${formatMultiplier(rebirthMultiplier(rebirths))} Power`} />
+        <StatCard kind="health" text={`${formatMultiplier(rebirthMultiplier(rebirths))} Breath`} />
         <Icon name="fastForward" size={u(80)} />
-        <StatCard kind="after" text={`${formatMultiplier(rebirthMultiplier(rebirths + 1))} Power`} />
+        <StatCard kind="after" text={`${formatMultiplier(rebirthMultiplier(rebirths + 1))} Breath`} />
 
         <StatCard kind="level" text={`Max Level ${cap}`} />
         <Icon name="fastForward" size={u(80)} />
@@ -84,7 +84,7 @@ export function RebirthPanel() {
 
       <p className="m-0 text-center" style={{ fontSize: u(46), marginTop: u(18) }}>
         <StrokeText stroke={u(9)} gradient={PURPLE}>
-          Rebirth resets your Level and Power!
+          Rebirth resets your Level and Breath!
         </StrokeText>
       </p>
       {gift && (

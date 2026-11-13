@@ -6,10 +6,10 @@ import { getSDK, safeCall } from './sdk'
  */
 
 /**
- * The game slug from the Boxity developer dashboard: `1-arm-length`. The deploy
+ * The game slug from the Boxity developer dashboard: `1-bubble-bounce`. The deploy
  * workflow passes it as VITE_GAME_SLUG; local builds fall back to it.
  */
-export const GAME_SLUG = import.meta.env.VITE_GAME_SLUG || '1-arm-length'
+export const GAME_SLUG = import.meta.env.VITE_GAME_SLUG || '1-bubble-bounce'
 
 const GUEST_KEY = 'pp.guestId'
 

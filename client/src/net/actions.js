@@ -18,10 +18,14 @@ export function send(type, payload) {
 
 export const actions = {
   /**
-   * Launches you; only counts on the LAUNCH PAD (the LET GO! button sends it).
-   * `accuracy` (0-1) is the stretch meter when you let go; leave it out for Auto Launch.
+   * Bounces you; only counts in the BLOW ZONE (letting go of BLOW sends it).
+   * `accuracy` (0-1) is the blow meter when you let go; leave it out for Auto Bounce.
    */
   roll: (accuracy) => send('roll', Number.isFinite(accuracy) ? { accuracy } : undefined),
+  /** One tap of BLOW: a Breath gain (the server limits how fast they count). */
+  blow: () => send('blow'),
+  /** A tap of touch-down `k` while you bounce, judged 'perfect' or 'good' (rollControl.tapBounce). */
+  bounceTap: (k, grade) => send('bounceTap', { k, grade }),
   enterPad: (pad) => send('enterPad', { pad }),
   leavePad: () => send('leavePad'),
   rebirth: () => send('rebirth'),

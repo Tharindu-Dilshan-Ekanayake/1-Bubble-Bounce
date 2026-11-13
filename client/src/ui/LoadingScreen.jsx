@@ -5,15 +5,17 @@ import { iconUrl } from './icons'
 import StrokeText from './StrokeText'
 
 const TIPS = [
-  'Hang from a pull-up bar to gain Power automatically!',
-  'More Power = you fly further, and every metre pays Wins!',
-  'Let go at the very top of the stretch for a PERFECT launch: x1.5 distance, x1.6 Wins!',
-  'Rebirth at max level for x2, x3, x4... Power and a higher level cap.',
-  'The further you fly, the more each metre pays.',
-  'Spend Wins on stretchier arms, pets and better pull-up bars.',
-  'Pets multiply all the Power you gain.',
-  'You earn Power every second you fly!',
-  'Every pair of arms looks different - collect all 24!',
+  'Stand on a Blow Pad to blow bubbles and gain Breath automatically!',
+  'Tap BLOW for even more Breath - on a Blow Pad every tap counts the pad!',
+  'More Breath = you bounce further, and every metre pays Wins!',
+  'Let go of BLOW when the bubble is biggest for a PERFECT launch: x1.5 distance, x1.6 Wins!',
+  'Every bounce earns you more Breath on the way!',
+  'TAP the moment your bubble lands for a PERFECT BOUNCE: more distance, Wins and Breath!',
+  'Rebirth at max level for x2, x3, x4... Breath and a higher level cap.',
+  'Bounce through the village, the town and the city - and on to space!',
+  'Spend Wins on new bubbles, pets and better Blow Pads.',
+  'Pets multiply all the Breath you gain.',
+  'Every bubble is a different shape - collect all 24!',
 ]
 
 /**
@@ -85,7 +87,7 @@ export function LoadingScreen({ done }) {
           </StrokeText>
         </span>
         <span className="text-base md:text-xl" style={{ marginTop: '0.4em' }}>
-          <StrokeText stroke={5}>TRAIN • STRETCH • FLY • REBIRTH</StrokeText>
+          <StrokeText stroke={5}>BLOW • BOUNCE • COLLECT • REBIRTH</StrokeText>
         </span>
       </h1>
 

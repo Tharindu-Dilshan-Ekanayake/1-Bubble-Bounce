@@ -23,32 +23,33 @@ import { getQuality } from '../../store/quality'
 import { BlockSet, disposeBlocks } from '../blocks'
 import { sharedMaterials, STYLE } from '../materials'
 import { PALETTE, TEAM, venueOf } from '../sceneStyle'
-import { activeWorld, blendSky, perWorld, skyLook, zones } from '../worldLook'
+import { PIECE_PARTS, sceneryPiece } from './scenery'
+import { activeWorld, blendSky, zones } from '../worldLook'
 import { SLOPE_EULER_X, slopeBoxMatrix, trackPoint } from './path'
 import { roll } from './rollControl'
-import { LANE_STRIPE, STAGE_LOOKS, ZONE_THEMES } from './themes'
+import { stageLookAt, stageLooks } from './stageLooks'
+import { LANE_STRIPE } from './themes'
 
 /**
- * The launch runway: a long strip down a green valley, every stage in its own colour of
- * the rainbow (red, orange, yellow, green, cyan, blue, purple, pink, round again) in a
- * checker of light and dark squares, a white line every 10 metres (a heavier one every
- * 50) with its distance painted beside it ("1,340 m"), a tall yellow distance gate every
- * 100 metres to fly over, a banner arch over the start of every stage with its name and
- * length ("Maple Lane - 106 M"), and either side grass, then blocky hills of checkered
- * dirt with trees on them, rising into cliffs. (Palm Beach keeps its stands, palms and
- * sea.) Each stage
- * brings its own sky (blended in as the ball gets there: ZONE_THEMES), its own ground
- * beyond the stands and its own skyline colours (STAGE_LOOKS), and a glowing line across
- * the pitch where it starts. No gates.
+ * The bounce valley: a long strip running north from the Blow Zone, every stage in the
+ * ground of its own scene (shared/balance.js ZONES `scene`: meadow grass, a village's
+ * dirt road, town and city asphalt, harbour planks, beach sand, snow, candy, moon dust...)
+ * in a checker of light and dark squares - each stage in a bright colour of its own
+ * (stageLooks.js), the strip and ground beside it tinted to match - a white line every 10 metres (a heavier one
+ * every 50) with its distance painted beside it ("1,340 m"), a tall yellow distance gate
+ * every 100 metres to bounce over, a banner arch over the start of every stage with its
+ * name and length ("Maple Town - 112 M"), and either side the stage's scenery
+ * (scenery.js): cottages, barns, houses, skyscrapers, lighthouses, palms, igloos, candy
+ * houses, giant mushrooms, crystals, domes. Each stage brings its own sky too (blended in
+ * as the bubble gets there: ZONE_THEMES), and a glowing line across the valley where it
+ * starts.
  *
- * Nothing is built per stretch of field. A fixed set of pieces - ground squares, turf
- * bands, yard lines/goalposts/towers/arches, pavilion segments with their crowds,
- * TOWER_SLOTS buildings of skyline, a pool of numerals and the banner arches' name boards -
- * is moved along to wherever you're looking (the ball in flight, the start from the lobby)
- * and recoloured for the stage it lands in. Seven draw calls, the same at 60 yd or 16 km,
- * and nothing allocated while it runs. On LOW the crowds are left out, only the pavilions
- * within sight are drawn, and the view is shorter (the preset's decorDensity and
- * viewDistance).
+ * Nothing is built per stretch of valley. A fixed set of pieces - ground squares, turf
+ * bands, yard lines/gates/arches, CITY_SLOTS pieces of scenery, a pool of numerals and the
+ * banner arches' name boards - is moved along to wherever you're looking (the bubble in
+ * flight, the start from the lobby) and recoloured for the stage it lands in. Six draw
+ * calls, the same at 60 m or 16 km, and nothing allocated while it runs. On LOW the
+ * scenery is sparser and the view shorter (the preset's decorDensity and viewDistance).
  *
  * Layers that lie on each other are always at least 3 cm apart (turf 0.04, lines 0.05-0.09,
  * stage lines 0.14, everything standing on the turf from 0.04), so nothing z-fights.
@@ -73,14 +74,16 @@ const STAGE_LINE = SEGMENTS + 4
 const STAGE_LINES = 7
 /** The top of the turf; everything standing on it starts here. */
 const TURF_TOP = 0.04
-/** The LED boards stand here, along the pitch; the turf runs out to SIDE_TURF_X either side. */
+/** The venue of the world being shown (sceneStyle VENUES): its colours, and whether it's the beach. */
+const venue = () => venueOf(activeWorld())
+/** The edge rails stand here, along the valley; the turf runs out to SIDE_TURF_X either side. */
 const WALL_X = LANE_WIDTH / 2 + 1.2
 const SIDE_TURF_X = 44
 
-/** Skyline: one building every CITY_EVERY yards, alternating sides, beyond the stands. */
-const CITY_EVERY = 10
+/** Scenery: one piece every CITY_EVERY metres, alternating sides, PARTS boxes each. */
+const CITY_EVERY = 8
 const CITY_SLOTS = Math.ceil(FIELD_LENGTH / CITY_EVERY) + 2
-const PARTS = 4
+const PARTS = PIECE_PARTS
 
 /** Parsed colours, by hex, so recolouring allocates nothing once warmed up. */
 const colorCache = new Map()
@@ -92,17 +95,18 @@ function colorOf(hex) {
   }
   return c
 }
-const lookAt = (meter) => STAGE_LOOKS[zones()[zoneIndexAt(meter)].theme] ?? STAGE_LOOKS.grassy
 
-/** Each stage's runway colour, round the rainbow: [light, dark] squares of it. */
+/** The rainbow stages' floor: every band round the rainbow. */
 const RAINBOW = ['#ff5a5a', '#ff9a2e', '#ffd93a', '#5fdc4a', '#3fd6e8', '#4f86ff', '#a465ff', '#ff6bd0']
-const RUNWAY = RAINBOW.map((hex) => [new Color(hex).lerp(new Color('#ffffff'), 0.12), new Color(hex).multiplyScalar(0.86)])
-const runwayAt = (meter, k) => RUNWAY[zoneIndexAt(meter) % RUNWAY.length][k % 2]
-
-/** World 1's valley: grass beside the runway and under the hills, and the hills' dirt. */
-const VALLEY = { grass: ['#45c43c', '#3db535'], ground: '#3aa834', dirt: ['#ff8aa8', '#c08cff'], leaves: ['#ff6fae', '#ffd21f'], trunk: '#ffffff' }
+/**
+ * The valley floor's colour for band `k` at metre `meter`: the stage's own light or dark
+ * square (stageLooks.js) - round the rainbow, band by band, on a rainbow stage.
+ */
+const runwayAt = (meter, k) => {
+  if (zones()[zoneIndexAt(meter)].scene === 'rainbow') return colorOf(RAINBOW[Math.floor(k / 2) % RAINBOW.length])
+  return stageLookAt(meter).runway[k % 2]
+}
 /** Each stage's sky, parsed once per world. */
-const stageSkies = perWorld((zs) => zs.map((z) => skyLook(ZONE_THEMES[z.theme]?.sky ?? ZONE_THEMES.grassy.sky)))
 /** A stable pseudo-random 0-1 for piece `k` (and a salt): the same on every client. */
 function hash(k, salt) {
   let h = Math.imul(k ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul(salt + 1, 0xc2b2ae35)
@@ -159,131 +163,6 @@ function createMarks() {
   return mesh
 }
 
-// --- Pavilions down both sides (one box mesh) -------------------------------------------
-//
-// Laid out slot-major: every segment's structure first (MAIN boxes a segment), then every
-// segment's crowd. A segment's boxes are at slot * MAIN + part, so drawing the first N
-// slots' structure is just `count = N * MAIN` - which is what LOW does (only the segments
-// within its short view, no crowd).
-
-const SEG_LEN = 20
-const STAND_SLOTS = Math.ceil(FIELD_LENGTH / SEG_LEN) + 2
-/** On LOW only this many segments are in the ring: enough to cover its view distance. */
-const STAND_SLOTS_LOW = 14
-const ROWS = 6
-const ROW_DEPTH = 2
-const rowTop = (r) => 1.3 + 0.9 * r
-/** The pavilion's front edge (the LED board stands just in front of it) and its roof's height. */
-const STAND_X0 = WALL_X + 0.6
-const BACK = ROWS * ROW_DEPTH
-const ROOF_Y = rowTop(ROWS - 1) + 3.4
-/** Boxes per side of a segment: steps, seats (two halves a row), aisle stairs, back wall, roof, fascia, two lamps, board. */
-const SIDE_PARTS = ROWS + ROWS * 2 + ROWS + 6
-const MAIN = SIDE_PARTS * 2
-/** Fans per seat half (three a half, two halves a row). */
-const FANS = 3
-const CROWD_PER_SIDE = ROWS * 2 * FANS
-const CROWD_PER_SLOT = CROWD_PER_SIDE * 2
-const STAND_INSTANCES = STAND_SLOTS * (MAIN + CROWD_PER_SLOT)
-const CONCRETE = PALETTE.concrete
-/** The venue of the world being shown (sceneStyle VENUES): its colours, and whether it's the beach. */
-const venue = () => venueOf(activeWorld())
-
-function createStands() {
-  const set = new BlockSet()
-  for (let slot = 0; slot < STAND_SLOTS; slot += 1) {
-    for (let side = 0; side < 2; side += 1) {
-      for (let r = 0; r < ROWS; r += 1) set.add(0, 0, 0, 0, 0, 0, CONCRETE[r % 3], STYLE.STUDS)
-      for (let i = 0; i < ROWS * 2; i += 1) set.add(0, 0, 0, 0, 0, 0, TEAM.blue, STYLE.SMOOTH)
-      for (let r = 0; r < ROWS; r += 1) set.add(0, 0, 0, 0, 0, 0, TEAM.gold, STYLE.SMOOTH)
-      set.add(0, 0, 0, 0, 0, 0, '#c4c9d2', STYLE.SMOOTH)
-      set.add(0, 0, 0, 0, 0, 0, '#e9eef4', STYLE.SMOOTH)
-      set.add(0, 0, 0, 0, 0, 0, NAVY, STYLE.SMOOTH)
-      set.add(0, 0, 0, 0, 0, 0, '#fffbe0', STYLE.GLOW)
-      set.add(0, 0, 0, 0, 0, 0, '#fffbe0', STYLE.GLOW)
-      set.add(0, 0, 0, 0, 0, 0, TEAM.blue, STYLE.GLOW)
-    }
-  }
-  for (let i = 0; i < STAND_SLOTS * CROWD_PER_SLOT; i += 1) set.add(0, 0, 0, 0, 0, 0, '#ffffff', STYLE.SMOOTH)
-  const mesh = set.build(sharedMaterials().blocks)
-  mesh.frustumCulled = false
-  return mesh
-}
-
-/** A box in a pavilion side's own terms: `s` along the field, `u` out from its front edge, `y` up. */
-function standBox(mesh, i, side, s0, s1, u0, u1, y0, y1) {
-  const sign = side ? 1 : -1
-  mesh.setMatrixAt(i, slopeBoxMatrix((s0 + s1) / 2, sign * (STAND_X0 + (u0 + u1) / 2), (y0 + y1) / 2, u1 - u0, y1 - y0, s1 - s0, 0, _m))
-}
-
-/**
- * Pavilion segment `k` (SEG_LEN yards, both sides), in ring slot `slot`: concrete steps
- * (every third a shade darker), two blocks of seats on each - royal blue, white in every
- * fourth segment so the stand reads in sections, not stripes - with a gold-nosed stair
- * aisle between them, a back wall, a cantilevered roof with a navy fascia and two
- * floodlights, the LED board along the front, and (not on LOW) fans in the seats.
- */
-function placeStand(mesh, k, slot, sparse) {
-  const s0 = k * SEG_LEN
-  const s1 = s0 + SEG_LEN
-  const mid = s0 + SEG_LEN / 2
-  const v = venue()
-  const seat = colorOf(k % 4 === 2 ? v.light : v.primary)
-  const boards = [v.primary, v.light, v.accent]
-  for (let side = 0; side < 2; side += 1) {
-    let i = slot * MAIN + side * SIDE_PARTS
-    for (let r = 0; r < ROWS; r += 1) {
-      standBox(mesh, i, side, s0, s1, r * ROW_DEPTH, (r + 1) * ROW_DEPTH, TURF_TOP, rowTop(r))
-      mesh.setColorAt(i++, colorOf(v.concrete[r % 3]))
-    }
-    for (let r = 0; r < ROWS; r += 1) {
-      const u0 = r * ROW_DEPTH + 0.5
-      const top = rowTop(r)
-      standBox(mesh, i, side, s0 + 0.3, mid - 0.8, u0, u0 + 1, top, top + 0.45)
-      mesh.setColorAt(i++, seat)
-      standBox(mesh, i, side, mid + 0.8, s1 - 0.3, u0, u0 + 1, top, top + 0.45)
-      mesh.setColorAt(i++, seat)
-    }
-    for (let r = 0; r < ROWS; r += 1) {
-      standBox(mesh, i, side, mid - 0.6, mid + 0.6, r * ROW_DEPTH + 0.05, (r + 1) * ROW_DEPTH - 0.05, rowTop(r), rowTop(r) + 0.12)
-      mesh.setColorAt(i++, colorOf(v.accent))
-    }
-    standBox(mesh, i, side, s0, s1, BACK, BACK + 0.6, TURF_TOP, ROOF_Y - 0.25)
-    mesh.setColorAt(i++, colorOf(v.wall))
-    standBox(mesh, i++, side, s0, s1, 1.0, BACK + 0.6, ROOF_Y - 0.25, ROOF_Y + 0.25)
-    standBox(mesh, i, side, s0, s1, 0.4, 1.0, ROOF_Y - 0.65, ROOF_Y + 0.45)
-    mesh.setColorAt(i++, colorOf(v.dark))
-    standBox(mesh, i++, side, s0 + 4, s0 + 6, 0.25, 0.4, ROOF_Y - 0.5, ROOF_Y - 0.1)
-    standBox(mesh, i++, side, s0 + 14, s0 + 16, 0.25, 0.4, ROOF_Y - 0.5, ROOF_Y - 0.1)
-    // The LED board, just in front of the pavilion, in the team's colours.
-    standBox(mesh, i, side, s0 + 0.15, s1 - 0.15, WALL_X - STAND_X0 - 0.3, WALL_X - STAND_X0 + 0.3, TURF_TOP, TURF_TOP + 1.2)
-    mesh.setColorAt(i, colorOf(boards[(k + side) % boards.length]))
-
-    // The fans: one in each of three spots on each half-row, picked by a seeded hash,
-    // each well inside its seat, never touching a neighbour.
-    for (let n = 0; n < CROWD_PER_SIDE; n += 1) {
-      const c = STAND_SLOTS * MAIN + slot * CROWD_PER_SLOT + side * CROWD_PER_SIDE + n
-      const id = k * 4096 + side * 512 + n
-      if (sparse || hash(id, 5) > 0.7) {
-        mesh.setMatrixAt(c, ZERO)
-        continue
-      }
-      const r = Math.floor(n / (2 * FANS))
-      const half = Math.floor(n / FANS) % 2
-      const j = n % FANS
-      const size = 0.55 + Math.floor(hash(id, 6) * 3) * 0.1
-      const from = half ? mid + 0.8 : s0 + 0.3
-      const along = from + (8.9 * (j + 0.5)) / FANS
-      const base = rowTop(r) + 0.45
-      const u = r * ROW_DEPTH + 1
-      const sign = side ? 1 : -1
-      trackPoint(along, sign * (STAND_X0 + u), base + size * 0.625, _p)
-      mesh.setMatrixAt(c, _m.compose(_p, _white.identity(), _s.set(size, size * 1.25, size)))
-      mesh.setColorAt(c, colorOf(v.crowd[Math.floor(hash(id, 9) * v.crowd.length)]))
-    }
-  }
-}
-
 /** Distances painted beside every line: "1,340 m". */
 const MARK_EVERY = YARD_EVERY
 const MAX_GLYPHS = 340
@@ -301,8 +180,6 @@ const FLAT = new Quaternion().setFromEuler(new Euler(-Math.PI / 2 + SLOPE_EULER_
 const _m = new Matrix4()
 const _p = new Vector3()
 const _s = new Vector3()
-const _white = new Quaternion()
-const _up = new Vector3(0, 1, 0)
 const ZERO = new Matrix4().makeScale(0, 0, 0)
 /** One label's glyph cells, reused: at most "99,999,999 m". */
 const label = new Int8Array(20)
@@ -413,14 +290,14 @@ const BANNER_COLS = 512
 const BANNER_ROW = BANNER_COLS / 4
 
 /** Paints arch `slot`'s board: name over its length, on navy in a gold frame. */
-function drawBanner(canvas, slot, name, sub) {
+function drawBanner(canvas, slot, name, sub, frame = '#ffb81f') {
   const ctx = canvas.getContext('2d')
   // Laid out in BANNER_COLS units; the canvas may be smaller (createBanners).
   const k = canvas.width / BANNER_COLS
   ctx.setTransform(k, 0, 0, k, 0, 0)
   const y0 = slot * BANNER_ROW
   ctx.clearRect(0, y0, BANNER_COLS, BANNER_ROW)
-  ctx.fillStyle = '#ffb81f'
+  ctx.fillStyle = frame
   ctx.fillRect(0, y0, BANNER_COLS, BANNER_ROW)
   ctx.fillStyle = NAVY
   ctx.fillRect(7, y0 + 7, BANNER_COLS - 14, BANNER_ROW - 14)
@@ -484,11 +361,14 @@ function createBanners() {
   for (let i = 0; i < BANNERS; i += 1) rows.setX(i, i)
   geometry.setAttribute('aRow', rows)
   const material = new ShaderMaterial({
-    uniforms: UniformsUtils.merge([UniformsLib.fog, { uAtlas: { value: texture } }]),
+    uniforms: UniformsUtils.merge([UniformsLib.fog, { uAtlas: { value: null } }]),
     vertexShader: bannerVertex,
     fragmentShader: bannerFragment,
     fog: true,
   })
+  // Set after the merge, never through it: UniformsUtils.merge clones textures, and the
+  // boards would sample a frozen copy - showing stale names (or black) once re-lettered.
+  material.uniforms.uAtlas.value = texture
   const mesh = new InstancedMesh(geometry, material, BANNERS)
   for (let i = 0; i < BANNERS; i += 1) mesh.setMatrixAt(i, ZERO)
   mesh.frustumCulled = false
@@ -499,7 +379,7 @@ function createBanners() {
 /** Draws every board again (the font has just loaded). */
 function redrawBanners(mesh) {
   const { canvas, texture, texts } = mesh.userData
-  texts.forEach((t, slot) => t && drawBanner(canvas, slot, t[0], t[1]))
+  texts.forEach((t, slot) => t && drawBanner(canvas, slot, t[0], t[1], t[2]))
   texture.needsUpdate = true
 }
 
@@ -524,86 +404,31 @@ function createCity() {
   return mesh
 }
 
+const _sceneryOut = []
+const _q = new Quaternion()
+const _eul = new Euler()
+
 /**
- * World 1's piece `k` in a skyline slot instead of a building: a blocky hill of
- * checkered dirt with a grass cap (STYLE.HILL) - a big terrace and a higher one stepped
- * up on it behind - and a tree (trunk and leaf cube, now and then pink blossom) on its
- * front terrace, at a random distance beyond the grass, the same on every client.
- * Alternating sides, so the runway runs down a valley between them. Four boxes each.
+ * Piece `k` of scenery in its slot: whatever its stage's scene puts beside the valley
+ * (scenery.js), on alternating sides, at a spot picked by a seeded hash - the same on
+ * every client. The first 60 m (by the Blow Zone) stay clear; on LOW every other pair of
+ * pieces is left out.
  */
-function placeHill(mesh, styles, k, sparse) {
+function placeScenery(mesh, styles, k, sparse) {
   const slot = (k % CITY_SLOTS) * PARTS
   const metre = k * CITY_EVERY + CITY_EVERY / 2
   const side = k % 2 ? 1 : -1
   const skip = metre < 60 || (sparse && k % 4 >= 2)
-  const w = 16 + Math.floor(hash(k, 2) * 4) * 4
-  const d = 16 + Math.floor(hash(k, 4) * 3) * 4
-  const h = 8 + Math.floor(hash(k, 3) * 4) * 4
-  const x = side * (LANE_WIDTH / 2 + 8 + w / 2 + hash(k, 1) * 24)
-  const back = side * (w * 0.3)
-  const pink = hash(k, 6) > 0.8
-  const tx = x - side * (w / 2 - 3)
-  const parts = [
-    // [x, y centre, z, width, height, depth, colour, style]
-    [x, h / 2, 0, w, h, d, VALLEY.dirt[k % 2], STYLE.MESA],
-    [x + back, h + h * 0.4, 0, w * 0.6, h * 0.8, d * 0.75, VALLEY.dirt[(k + 1) % 2], STYLE.MESA],
-    [tx, h + 1.4, 0, 0.9, 2.8, 0.9, VALLEY.trunk, STYLE.SMOOTH],
-    [tx, h + 3.9, 0, 3.6, 2.4, 3.6, VALLEY.leaves[pink ? 1 : 0], STYLE.STUDS],
-  ]
+  const parts = skip ? null : sceneryPiece(zones()[zoneIndexAt(metre)].scene, k, side, (salt) => hash(k, salt), (w) => side * (LANE_WIDTH / 2 + 3.5 + w / 2 + hash(k, 11) * 3), _sceneryOut)
   for (let i = 0; i < PARTS; i += 1) {
-    if (skip) {
+    if (!parts || i >= parts.length) {
       mesh.setMatrixAt(slot + i, ZERO)
       continue
     }
-    const [px, py, pz, sx, sy, sz, c, style] = parts[i]
+    const [px, py, pz, sx, sy, sz, c, style, rx = 0, ry = 0, rz = 0] = parts[i]
     trackPoint(metre + pz, px, py, _p)
-    mesh.setMatrixAt(slot + i, _m.compose(_p, _white.identity(), _s.set(sx, sy, sz)))
-    mesh.setColorAt(slot + i, colorOf(c))
-    styles[slot + i] = style
-  }
-}
-
-const BEACH = { sand: ['#f0d9a0', '#e8cf92'], trunk: '#9a6a3a', leaves: ['#2fae4a', '#4cd36a'], coconut: '#6a4424', canopy: ['#ff6f61', '#16b8c4', '#ffd27a'] }
-/** At Palm Beach the ground stops here on the east (the sea runs on beyond: Ocean.jsx). */
-const SHORE_X = 50
-
-/**
- * Palm Beach's piece `k` in a skyline slot instead of a building: on the west, palms and
- * beach umbrellas (with a deck chair) scattered over the sand; on the east, a row of palms
- * along the shore between the turf and the sea. Four boxes each, like a building; the
- * leaves and canopies are stacked 4-5 cm apart.
- */
-function placeBeachPiece(mesh, styles, k, sparse) {
-  const slot = (k % CITY_SLOTS) * PARTS
-  const metre = k * CITY_EVERY + CITY_EVERY / 2
-  const side = k % 2 ? 1 : -1
-  const skip = metre < 70 || (sparse && k % 4 >= 2)
-  const umbrella = side < 0 && k % 3 === 0
-  const x = side > 0 ? SIDE_TURF_X + 2 + hash(k, 1) * 3 : -(SIDE_TURF_X + 3 + hash(k, 1) * 50)
-  const turn = hash(k, 3) * Math.PI
-  const h = 7 + hash(k, 2) * 5
-  const color = BEACH.canopy[k % 3]
-  const parts = umbrella
-    ? [
-        [0, 1.35, 0, 0.14, 2.7, 0.14, '#ffffff', STYLE.SMOOTH, 0],
-        [0, 2.72, 0, 2.8, 0.12, 2.8, color, STYLE.SMOOTH, turn],
-        [0, 2.88, 0, 2.0, 0.12, 2.0, '#ffffff', STYLE.SMOOTH, turn + Math.PI / 4],
-        [1.8, 0.22, 0, 0.8, 0.44, 1.6, color, STYLE.STRIPES, turn],
-      ]
-    : [
-        [0, h / 2, 0, 0.7, h, 0.7, BEACH.trunk, STYLE.SMOOTH, 0],
-        [0, h + 0.1, 0, 5, 0.18, 0.9, BEACH.leaves[0], STYLE.SMOOTH, turn],
-        [0, h + 0.15, 0, 5, 0.18, 0.9, BEACH.leaves[1], STYLE.SMOOTH, turn + Math.PI / 2],
-        [0.3, h - 0.35, 0.2, 0.6, 0.5, 0.6, BEACH.coconut, STYLE.SMOOTH, 0],
-      ]
-  for (let i = 0; i < PARTS; i += 1) {
-    if (skip) {
-      mesh.setMatrixAt(slot + i, ZERO)
-      continue
-    }
-    const [px, py, pz, sx, sy, sz, c, style, rot] = parts[i]
-    trackPoint(metre + pz, x + px, py, _p)
-    mesh.setMatrixAt(slot + i, _m.compose(_p, _white.setFromAxisAngle(_up, rot), _s.set(sx, sy, sz)))
+    _q.setFromEuler(_eul.set(rx, ry, rz))
+    mesh.setMatrixAt(slot + i, _m.compose(_p, _q, _s.set(sx, sy, sz)))
     mesh.setColorAt(slot + i, colorOf(c))
     styles[slot + i] = style
   }
@@ -693,7 +518,7 @@ function placeMarks(marks, banners, from, laid) {
     if (m < from - 30 || m > to) continue
     const slot = i % BANNERS
     const base = ARCHES + slot * BANNER_PARTS
-    const gate = colorOf(ZONE_THEMES[stages[i].theme].gate)
+    const gate = stageLooks()[i].accent
     mark(marks, base, m, -ARCH_HALF, TURF_TOP + ARCH_HEIGHT / 2, 0.8, ARCH_HEIGHT, 0.8)
     mark(marks, base + 1, m, ARCH_HALF, TURF_TOP + ARCH_HEIGHT / 2, 0.8, ARCH_HEIGHT, 0.8)
     mark(marks, base + 2, m, 0, ARCH_HEIGHT + 0.64, ARCH_HALF * 2 + 0.8, 1.2, 1.2)
@@ -704,8 +529,9 @@ function placeMarks(marks, banners, from, laid) {
     if (laid.banners[slot] !== key) {
       laid.banners[slot] = key
       const length = (stages[i + 1]?.start ?? stages[i].start + 100) - stages[i].start
-      banners.userData.texts[slot] = [stages[i].name, `${length} M`]
-      drawBanner(banners.userData.canvas, slot, stages[i].name, `${length} M`)
+      const frame = stageLooks()[i].accentHex
+      banners.userData.texts[slot] = [stages[i].name, `${length} M`, frame]
+      drawBanner(banners.userData.canvas, slot, stages[i].name, `${length} M`, frame)
       banners.userData.texture.needsUpdate = true
     }
   }
@@ -721,7 +547,6 @@ export default function Lane() {
   const cityRef = useRef(null)
   const glyphsRef = useRef(null)
   const marksRef = useRef(null)
-  const standsRef = useRef(null)
   const bannersRef = useRef(null)
   /**
    * What the pieces were last laid out for: the first band, the first marker, the world,
@@ -734,7 +559,6 @@ export default function Lane() {
     world: -1,
     sparse: false,
     slots: new Int32Array(CITY_SLOTS).fill(-1),
-    stands: new Int32Array(STAND_SLOTS).fill(-1),
     banners: new Array(BANNERS).fill(null),
   })
   const assets = useMemo(
@@ -744,7 +568,6 @@ export default function Lane() {
       city: createCity(),
       glyphs: createGlyphs(),
       marks: createMarks(),
-      stands: createStands(),
       banners: createBanners(),
     }),
     [],
@@ -768,7 +591,6 @@ export default function Lane() {
       disposeBlocks(assets.stripes)
       disposeBlocks(assets.city)
       disposeBlocks(assets.marks)
-      disposeBlocks(assets.stands)
       assets.glyphs.geometry.dispose()
       assets.glyphs.material.dispose()
       assets.glyphs.userData.atlas.dispose()
@@ -787,53 +609,40 @@ export default function Lane() {
     const city = cityRef.current
     const glyphs = glyphsRef.current
     const marks = marksRef.current
-    const stands = standsRef.current
     const banners = bannersRef.current
-    if (!field || !stripes || !city || !glyphs || !marks || !stands || !banners) return
+    if (!field || !stripes || !city || !glyphs || !marks || !banners) return
     const focus = roll.active ? Math.max(0, roll.meter) : 0
 
     // The sky of the stage the ball is over, eased in. (Roll.jsx puts the lobby's back after.)
-    if (roll.active) blendSky(stageSkies()[zoneIndexAt(focus)], 1 - Math.exp(-2.5 * Math.min(delta, 0.1)), scene.fog)
+    if (roll.active) blendSky(stageLookAt(focus).sky, 1 - Math.exp(-2.5 * Math.min(delta, 0.1)), scene.fog)
 
     const laid = laidFor.current
     const band = Math.floor(Math.max(0, focus - BEHIND) / STRIPE)
     const world = activeWorld()
     const beach = venue().beach
     const sparse = getQuality().decorDensity < 0.5
-    const ring = sparse ? STAND_SLOTS_LOW : STAND_SLOTS
     if (world !== laid.world || sparse !== laid.sparse) {
       // Another world's stages, or another density of scenery: lay everything afresh.
       laid.world = world
       laid.sparse = sparse
       laid.band = -1
       laid.slots.fill(-1)
-      laid.stands.fill(-1)
       laid.banners.fill(null)
-      // LOW draws only its ring's structure; the rest also the crowd. World 1 has hills
-      // beside the runway instead: no stands at all.
-      stands.count = !beach ? 0 : sparse ? STAND_SLOTS_LOW * MAIN : STAND_INSTANCES
     }
 
     if (band !== laid.band) {
       laid.band = band
       const from = band * STRIPE
       const mid = from + FIELD_LENGTH / 2
-      // The ground's squares, each in the look of the stage it's in.
+      // The ground's squares, each in the ground of the stage's scene.
       const fieldStyles = field.geometry.getAttribute('aStyle')
       const first = Math.floor(from / SEGMENT)
       for (let j = first; j < first + SEGMENTS; j += 1) {
         const slot = j % SEGMENTS
-        if (beach) {
-          // Sand out to the shore on the east (the sea beyond), and away west.
-          const west = -FIELD_WIDTH / 2
-          field.setMatrixAt(slot, slopeBoxMatrix(j * SEGMENT + SEGMENT / 2, (west + SHORE_X) / 2, -0.5, SHORE_X - west, 1, SEGMENT, 0, _m))
-          field.setColorAt(slot, colorOf(BEACH.sand[j % 2]))
-          fieldStyles.array[slot] = STYLE.STUDS
-        } else {
-          field.setMatrixAt(slot, slopeBoxMatrix(j * SEGMENT + SEGMENT / 2, 0, -0.5, FIELD_WIDTH, 1, SEGMENT, 0, _m))
-          field.setColorAt(slot, colorOf(VALLEY.ground))
-          fieldStyles.array[slot] = STYLE.STUDS
-        }
+        const m = j * SEGMENT + SEGMENT / 2
+        field.setMatrixAt(slot, slopeBoxMatrix(m, 0, -0.5, FIELD_WIDTH, 1, SEGMENT, 0, _m))
+        field.setColorAt(slot, stageLookAt(m).ground)
+        fieldStyles.array[slot] = STYLE.STUDS
       }
       for (let side = 0; side < 2; side += 1) {
         const s = side ? 1 : -1
@@ -849,7 +658,7 @@ export default function Lane() {
         const start = stages[i].start
         if (start < from || start > from + FIELD_LENGTH) continue
         field.setMatrixAt(STAGE_LINE + line, slopeBoxMatrix(start, 0, 0.11, LANE_WIDTH - 0.2, 0.06, 1.4, 0, _m))
-        field.setColorAt(STAGE_LINE + line, colorOf(ZONE_THEMES[stages[i].theme].gate))
+        field.setColorAt(STAGE_LINE + line, stageLooks()[i].accent)
         line += 1
       }
       for (; line < STAGE_LINES; line += 1) field.setMatrixAt(STAGE_LINE + line, ZERO)
@@ -864,28 +673,13 @@ export default function Lane() {
       for (let k = k0; k < k0 + CITY_SLOTS; k += 1) {
         if (laid.slots[k % CITY_SLOTS] === k) continue
         laid.slots[k % CITY_SLOTS] = k
-        if (beach) placeBeachPiece(city, cityStyles.array, k, sparse)
-        else placeHill(city, cityStyles.array, k, sparse)
+        placeScenery(city, cityStyles.array, k, sparse)
         placed = true
       }
       if (placed) {
         city.instanceMatrix.needsUpdate = true
         city.instanceColor.needsUpdate = true
         cityStyles.needsUpdate = true
-      }
-
-      // Pavilion segments likewise, round the ring the preset uses.
-      const s0 = Math.floor(from / SEG_LEN)
-      let stood = false
-      for (let k = s0; beach && k < s0 + ring; k += 1) {
-        if (laid.stands[k % ring] === k) continue
-        laid.stands[k % ring] = k
-        placeStand(stands, k, k % ring, sparse)
-        stood = true
-      }
-      if (stood) {
-        stands.instanceMatrix.needsUpdate = true
-        stands.instanceColor.needsUpdate = true
       }
 
       // Lines, distance gates, floodlights, banner arches.
@@ -896,10 +690,9 @@ export default function Lane() {
       for (let k = band; k < band + STRIPES; k += 1) {
         const m = k * STRIPE + STRIPE / 2
         stripes.setMatrixAt(k % STRIPES, slopeBoxMatrix(m, 0, TURF_TOP / 2, LANE_WIDTH, TURF_TOP, STRIPE, 0, _m))
-        // The runway in its stage's rainbow colour; the turf beside it green (World 1)
-        // or in the stage's own greens (Palm Beach).
+        // The valley floor in its scene's ground; the strip beside it likewise.
         stripes.setColorAt(k % STRIPES, runwayAt(m, k))
-        const turf = beach ? colorOf(lookAt(m).turf[k % 2]) : colorOf(VALLEY.grass[k % 2])
+        const turf = stageLookAt(m).turf[k % 2]
         for (let side = 0; side < 2; side += 1) {
           const s = side ? 1 : -1
           const i = STRIPES + (k % STRIPES) * 2 + side
@@ -952,7 +745,6 @@ export default function Lane() {
       <primitive ref={cityRef} object={assets.city} />
       <primitive ref={glyphsRef} object={assets.glyphs} />
       <primitive ref={marksRef} object={assets.marks} />
-      <primitive ref={standsRef} object={assets.stands} />
       <primitive ref={bannersRef} object={assets.banners} />
     </>
   )

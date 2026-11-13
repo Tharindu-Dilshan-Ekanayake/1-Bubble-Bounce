@@ -10,7 +10,7 @@ import {
   Vector3,
 } from 'three'
 
-import { LAUNCH_STAND, MAX_PULL, ROLL_ZONE, SHOP_SIGN, SHOP_SIGN_FACING } from '@shared/world'
+import { ROLL_ZONE, SHOP_SIGN, SHOP_SIGN_FACING } from '@shared/world'
 
 import { venueOf } from '../sceneStyle'
 import { DECAL_Y, DIGIT, DIRECTIONS, END_ZONE_TEXT, LOGO, yardNumbers } from './pitch'
@@ -161,40 +161,40 @@ function paintLogo(ctx, [rx, ry, size], logo) {
     ctx.fill()
     ctx.restore()
   }
-  // The emblem: a rubber arm at full stretch snaking up to a big golden fist (the same
-  // art as the game's icon, ui/icons.js), ringed like a rubber band.
-  ctx.save()
-  const k = (size * 0.5) / 100
-  ctx.translate(cx - 50 * k, cy - 52 * k)
-  ctx.scale(k, k)
-  const arm = new Path2D('M16 88C20 62 50 72 48 50S60 32 66 31')
-  ctx.lineCap = 'round'
-  ctx.strokeStyle = '#1b1b1f'
-  ctx.lineWidth = 25
-  ctx.stroke(arm)
-  ctx.strokeStyle = '#ff6ab8'
-  ctx.lineWidth = 15
-  ctx.stroke(arm)
-  ctx.setLineDash([4, 10])
-  ctx.strokeStyle = 'rgba(255,255,255,0.6)'
-  ctx.stroke(arm)
-  ctx.setLineDash([])
-  ctx.beginPath()
-  ctx.arc(73, 27, 17, 0, Math.PI * 2)
-  ctx.fillStyle = '#ffcf2e'
-  ctx.fill()
-  ctx.lineWidth = 6
-  ctx.strokeStyle = '#1b1b1f'
-  ctx.stroke()
-  ctx.lineWidth = 3.5
-  ctx.beginPath()
-  // The gaps between the curled fingers, along the top of the fist.
-  for (const [x0, y0, x1, y1] of [[66, 12, 69, 20], [74, 10, 74, 20], [82, 12, 79, 20]]) {
-    ctx.moveTo(x0, y0)
-    ctx.lineTo(x1, y1)
+  // The emblem: a big soap bubble with a rainbow rim and a bright window highlight, two
+  // little ones floating off it (the same art as the game's bubble icon, ui/icons.js).
+  const bubble = (x, y, r) => {
+    ctx.beginPath()
+    ctx.arc(x, y, r, 0, Math.PI * 2)
+    const fill = ctx.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r)
+    fill.addColorStop(0, '#ffffff')
+    fill.addColorStop(0.55, '#d8f6ff')
+    fill.addColorStop(1, '#9fc8ff')
+    ctx.fillStyle = fill
+    ctx.fill()
+    ctx.lineWidth = Math.max(2, r * 0.12)
+    ctx.strokeStyle = '#1b1b1f'
+    ctx.stroke()
+    const rim = ctx.createLinearGradient(x - r, y - r, x + r, y + r)
+    rim.addColorStop(0, '#ff8fd0')
+    rim.addColorStop(0.33, '#fff27a')
+    rim.addColorStop(0.66, '#7affc8')
+    rim.addColorStop(1, '#7fb8ff')
+    ctx.beginPath()
+    ctx.arc(x, y, r * 0.78, 0, Math.PI * 2)
+    ctx.lineWidth = r * 0.16
+    ctx.strokeStyle = rim
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.arc(x, y, r * 0.55, Math.PI * 1.05, Math.PI * 1.45)
+    ctx.lineWidth = r * 0.14
+    ctx.lineCap = 'round'
+    ctx.strokeStyle = '#ffffff'
+    ctx.stroke()
   }
-  ctx.stroke()
-  ctx.restore()
+  bubble(cx - size * 0.03, cy + size * 0.02, size * 0.2)
+  bubble(cx + size * 0.17, cy - size * 0.13, size * 0.07)
+  bubble(cx + size * 0.12, cy + size * 0.17, size * 0.045)
 }
 
 const _q = new Quaternion()
@@ -212,9 +212,9 @@ const ROUND_SIDES = 32
  */
 const cellsFor = (v) => ({
   logo: { rect: [0, 0, 0.5, 0.5], paint: (ctx, r) => paintLogo(ctx, r, v.logo) },
-  arch: { rect: [0.5, 0, 0.5, 0.15], paint: (ctx, r) => paintText(ctx, r, 'STRETCH & FLY', { fill: GOLD, edge: '#c2410c', slant: 0.14 }) },
-  shop: { rect: [0.5, 0.15, 0.5, 0.13], paint: (ctx, r) => paintText(ctx, r, 'ARM SHOP', { fill: GOLD, edge: '#c2410c', slant: 0.14 }) },
-  zone: { rect: [0.5, 0.28, 0.5, 0.12], paint: (ctx, r) => paintText(ctx, r, 'LAUNCH PAD', { fill: NAVY, edge: '#a08a10' }) },
+  arch: { rect: [0.5, 0, 0.5, 0.15], paint: (ctx, r) => paintText(ctx, r, 'BLOW & BOUNCE!', { fill: GOLD, edge: '#c2410c', slant: 0.14 }) },
+  shop: { rect: [0.5, 0.15, 0.5, 0.13], paint: (ctx, r) => paintText(ctx, r, 'BUBBLE SHOP', { fill: GOLD, edge: '#c2410c', slant: 0.14 }) },
+  zone: { rect: [0.5, 0.28, 0.5, 0.12], paint: (ctx, r) => paintText(ctx, r, 'BLOW ZONE', { fill: NAVY, edge: '#a08a10' }) },
   ...Object.fromEntries(
     Array.from({ length: 6 }, (_, d) => [
       `digit${d}`,
@@ -230,26 +230,6 @@ const cellsFor = (v) => ({
     ]),
   ),
 })
-
-/**
- * The stretch lane's metre marks (5, 10 ... 40), painted beside its ticks on the west
- * side - over the pad's yellow where they're on it (its top is 0.10), on the path beyond.
- * Every number is made of the digits 0-5, all the atlas has.
- */
-function laneNumbers() {
-  const out = []
-  const w = 1.25
-  for (let m = 5; m <= MAX_PULL; m += 5) {
-    const z = LAUNCH_STAND.z + m
-    const y = z <= ROLL_ZONE.maxZ + 0.8 ? 0.14 : DECAL_Y
-    const digits = String(m).split('').map(Number)
-    digits.forEach((d, i) => {
-      const x = LAUNCH_STAND.x - 4 - (digits.length - 1 - i) * (w + 0.05)
-      out.push({ cell: `digit${d}`, width: w, at: [x, y, z], yaw: 0, flat: true })
-    })
-  }
-  return out
-}
 
 /**
  * Every quad: which cell it shows, its width in the world (its height follows the cell's
@@ -269,11 +249,8 @@ function quadList() {
       yaw: (SHOP_SIGN_FACING * Math.PI) / 2,
       flat: false,
     },
-    // Over the kick zone's yellow strip (top 0.10) and its navy chevrons (top 0.14).
-    // Either side of the stretch lane down its middle.
-    { cell: 'zone', width: zoneWidth, at: [-8.6, 0.18, (ROLL_ZONE.minZ + ROLL_ZONE.maxZ) / 2 + 0.3], yaw: 0, flat: true },
-    { cell: 'zone', width: zoneWidth, at: [8.6, 0.18, (ROLL_ZONE.minZ + ROLL_ZONE.maxZ) / 2 + 0.3], yaw: 0, flat: true },
-    ...laneNumbers(),
+    // Across the Blow Zone's yellow strip (top 0.10), in front of its blow spots.
+    { cell: 'zone', width: zoneWidth * 1.4, at: [0, 0.18, ROLL_ZONE.maxZ - 2.6], yaw: 0, flat: true },
     // The logo is drawn as a round disc, not a square, so the yard lines cut back round it
     // never run under its (clear) corners.
     { cell: 'logo', width: LOGO.radius * 2, at: [LOGO.x, DECAL_Y, LOGO.z], yaw: 0, flat: true, round: true },

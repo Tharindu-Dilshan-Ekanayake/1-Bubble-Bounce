@@ -1,9 +1,9 @@
-# Ships +1 Arm Length to Bloxity Legion: the dev branch to the dev channel, main to prod.
+# Ships +1 Bubble Hop to Bloxity Legion: the dev branch to the dev channel, main to prod.
 #
 #   server   -> Docker image in this repo's GitHub Container Registry, then Legion rolls
-#               it out (https://1-arm-length.host.bloxity.io / .dev.host.bloxity.io)
-#   frontend -> the built client, served at https://1-arm-length.play.bloxity.io
-#               (prod) and https://1-arm-length.dev.play.bloxity.io (dev)
+#               it out (https://1-bubble-bounce.host.bloxity.io / .dev.host.bloxity.io)
+#   frontend -> the built client, served at https://1-bubble-bounce.play.bloxity.io
+#               (prod) and https://1-bubble-bounce.dev.play.bloxity.io (dev)
 #
 # Every push deploys to the production platform, and to the staging platform too once
 # its token exists. A manual run (Actions -> Run workflow) deploys any branch to the one
@@ -13,7 +13,7 @@
 #   LEGION_DEPLOY_TOKEN        production platform (required)
 #   LEGION_DEPLOY_TOKEN_STAGE  staging platform (optional; staging is skipped without it)
 # After the first run, make the ghcr.io package public so Legion can pull it
-# (repo -> Packages -> 1-arm-length-server -> Package settings -> Change visibility).
+# (repo -> Packages -> 1-bubble-bounce-server -> Package settings -> Change visibility).
 #
 # One client build works on every platform: the Bloxity SDK and the server find their
 # own environment at runtime, so no URL or environment goes into the build.
@@ -32,7 +32,7 @@ on:
         default: staging
 
 env:
-  GAME_ID: 1-arm-length
+  GAME_ID: 1-bubble-bounce
   # Seats per pod: the Colyseus room's maxClients (GameRoom.js MAX_CLIENTS). When a pod
   # fills to it, Legion's matchmaker starts another.
   SEAT_CAP: 8

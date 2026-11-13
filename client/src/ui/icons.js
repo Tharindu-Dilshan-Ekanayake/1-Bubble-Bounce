@@ -143,44 +143,44 @@ const star = svg(
 )
 
 /**
- * Power (the code's `health`): a chunky lightning bolt, glossy yellow with a white shine.
- * Still named `heart`, so every place that showed Health shows Power.
+ * Breath (the code's `health`): a puff of air curling out in a swirl, glossy sky-blue
+ * with white shine, little bubbles blowing off it. Still named `heart`, so every place
+ * that showed Health shows Breath.
  */
+const BREATH = 'M14 58c0-14 12-22 24-20 4-12 20-16 30-8 12-2 22 8 18 20 8 6 4 20-8 20H28c-8 0-14-6-14-12z'
 const heart = svg(
-  `<path d="M58 6L18 56h24l-8 38 48-54H56z" fill="url(#ht-g)" stroke="${OUT}" stroke-width="6" stroke-linejoin="round"/>
-  <path d="M52 16L28 48" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".8"/>`,
+  `<path d="${BREATH}" fill="url(#ht-g)" stroke="${OUT}" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M30 60c6-10 18-6 18 2s-12 8-12 0" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".9"/>
+  <path d="M56 50c6-6 16-2 14 6" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" opacity=".75"/>
+  <circle cx="80" cy="20" r="9" fill="#e8f9ff" stroke="${OUT}" stroke-width="4.5"/>
+  <circle cx="64" cy="12" r="5.5" fill="#e8f9ff" stroke="${OUT}" stroke-width="3.5"/>
+  <circle cx="77" cy="17" r="2.6" fill="#fff"/>`,
   vgrad('ht-g', [
-    [0, '#fffbd0'],
-    [0.45, '#ffd21f'],
-    [1, '#ff8a00'],
+    [0, '#ffffff'],
+    [0.45, '#8fdcff'],
+    [1, '#2f8ff2'],
   ]),
 )
 
 /**
- * A rubber arm at full stretch: a long pink arm snaking up from the bottom left, ringed
- * like a rubber band, ending in a big golden fist, with speed marks where it's pulled -
- * in a thick ink outline. Still named `tire`, so every place that showed the template's
- * tire (the LAUNCH button, the shop, the passes, the loading screen) shows the arm.
+ * A soap bubble: a round, see-through rainbow film with a bright window highlight and a
+ * little bubble beside it - in a thick ink outline. Still named `tire`, so every place
+ * that showed the template's tire (the BLOW button, the shop, the passes, the loading
+ * screen) shows a bubble.
  */
-const STRETCH = 'M16 88C20 62 50 72 48 50S60 32 66 31'
 const tire = svg(
-  `<path d="${STRETCH}" fill="none" stroke="${OUT}" stroke-width="25" stroke-linecap="round"/>
-  <path d="${STRETCH}" fill="none" stroke="url(#ar-g)" stroke-width="15" stroke-linecap="round"/>
-  <path d="${STRETCH}" fill="none" stroke="#fff" stroke-width="15" stroke-dasharray="4 10" opacity=".5"/>
-  <circle cx="73" cy="27" r="17" fill="url(#ar-f)" stroke="${OUT}" stroke-width="6"/>
-  <path d="M66 12l3 8M74 10v10M82 12l-3 8" fill="none" stroke="${OUT}" stroke-width="3.5" stroke-linecap="round"/>
-  <path d="M61 20q2-6 6-8" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" opacity=".85"/>
-  <path d="M6 60l10 4M7 73l10 1M30 94l3-9" stroke="#fff" stroke-width="4.5" stroke-linecap="round"/>
-  <path d="M6 60l10 4M7 73l10 1M30 94l3-9" stroke="${OUT}" stroke-width="1.5" stroke-linecap="round" opacity=".5"/>`,
-  vgrad('ar-g', [
-    [0, '#ffa3dc'],
-    [1, '#e2318c'],
+  `<circle cx="44" cy="54" r="36" fill="url(#bb-g)" stroke="${OUT}" stroke-width="6"/>
+  <circle cx="44" cy="54" r="27" fill="none" stroke="url(#bb-r)" stroke-width="7" opacity=".85"/>
+  <path d="M24 42c4-10 12-16 22-18" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="58" cy="70" r="4" fill="#fff" opacity=".9"/>
+  <circle cx="84" cy="20" r="11" fill="url(#bb-g)" stroke="${OUT}" stroke-width="4.5"/>
+  <path d="M78 17q2-4 6-5" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>`,
+  vgrad('bb-g', [
+    [0, '#ffffff'],
+    [0.5, '#bfefff'],
+    [1, '#9fc8ff'],
   ]) +
-    vgrad('ar-f', [
-      [0, '#fff0a0'],
-      [0.5, '#ffcf2e'],
-      [1, '#f08c00'],
-    ]),
+    `<linearGradient id="bb-r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8fd0"/><stop offset=".33" stop-color="#fff27a"/><stop offset=".66" stop-color="#7affc8"/><stop offset="1" stop-color="#7fb8ff"/></linearGradient>`,
 )
 
 /** A round potion flask with a cork, filled with `liquid` and a small badge icon. */

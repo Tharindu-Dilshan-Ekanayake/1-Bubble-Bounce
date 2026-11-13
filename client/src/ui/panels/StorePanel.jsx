@@ -29,12 +29,12 @@ const ICONS = {
 }
 
 const BLURBS = {
-  healthX2: 'Double every Power gain, forever',
-  winsX2: 'Double the Wins from every launch, forever',
-  autoRoll: 'Stretches and launches you from the Launch Pad',
+  healthX2: 'Double every Breath gain, forever',
+  winsX2: 'Double the Wins from every bounce, forever',
+  autoRoll: 'Blows your bubble and bounces you from the Blow Zone',
   padVeryOp: 'Unlocks the x40 Diamond Pad',
   padBest: 'Unlocks the x100 Galaxy Pad',
-  sphinx: `Limited: x${formatNumber(PETS.sphinx.mult)} Power pet`,
+  sphinx: `Limited: x${formatNumber(PETS.sphinx.mult)} Breath pet`,
 }
 
 const BLURB_STYLE = { color: '#3a2a10', fontFamily: 'system-ui, sans-serif', fontWeight: 700 }
