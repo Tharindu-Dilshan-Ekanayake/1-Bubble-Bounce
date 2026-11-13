@@ -1,6 +1,7 @@
 import { BLOW_TAP_BURST, BLOW_TAP_RATE, BOUNCE_TAP_EARLY_MS, BOUNCE_TAP_LATE_MS, bounceTimes, comboBonus, MAX_PERFECT_BOUNCES, crowdBonus, dayNumber, EGGS, hitGrade, ITEMS, MULTI_HATCH, PADS, ROLL_TICK, SHOP, TIRES, TRAIN_INTERVAL, ZONES } from './balance.js'
 import { applyStreak, claimQuest, claimQuestBonus, ensureQuests, progressQuests, questText, rollLuckyGift } from './engage.js'
 import {
+  applyTrain,
   advanceTutorial,
   applyAdReward,
   applyGemProduct,
@@ -9,7 +10,6 @@ import {
   applyRollTick,
   applyBlowTap,
   applyBounceTap,
-  applyTrain,
   awardBadge,
   buyHealthPack,
   buyShopItem,
@@ -41,6 +41,9 @@ const SPACE_ZONE = ZONES.findIndex((z) => z.id === 'space')
 const QUEST_SYNC = 5
 /** How far off a pad still counts as "on" it (network jitter). */
 const PAD_SLACK = 0.8
+/** Standing still: within STILL_RADIUS metres of where you settled for STILL_MS. */
+const STILL_RADIUS = 0.3
+const STILL_MS = 400
 /** Same for the roll zone. */
 const ROLL_SLACK = 1.5
 /** Tires are bought by standing at their stand; allow for a little lag. */
@@ -116,12 +119,15 @@ export class PlayerSession {
 
     /** Pad the client says it's on; verified against position every tick. */
     this.pad = -1
-    this.trainTimer = 0
     /** Server time until which the player's tire is out (and its result) and can't roll again. */
     this.busyUntil = 0
     /** Server time the current roll stops; Health ticks in until then. */
     this.rollingUntil = 0
     this.rollTimer = 0
+    /** Seconds towards the next step of training on a pad. */
+    this.trainTimer = 0
+    /** Where the player was last seen to settle, and since when (server ms): standing still. */
+    this.stillAt = { x: 0, z: 0, since: now }
     /** BLOW taps in hand (a token bucket: BLOW_TAP_RATE a second, BLOW_TAP_BURST at most) and when it was last topped up. */
     this.blowTokens = BLOW_TAP_BURST
     this.blowAt = now
@@ -509,6 +515,18 @@ export class PlayerSession {
     return inRect(standRect(stand), p.x, p.z, STAND_SLACK)
   }
 
+  /** Whether the player stays (within STILL_RADIUS) where they were for STILL_MS: not walking. */
+  isStill(now) {
+    const p = this.getPosition()
+    const a = this.stillAt
+    if (Math.hypot(p.x - a.x, p.z - a.z) > STILL_RADIUS) {
+      a.x = p.x
+      a.z = p.z
+      a.since = now
+    }
+    return now - a.since >= STILL_MS
+  }
+
   /** Whether the player is really standing on the pad they claim. */
   onClaimedPad() {
     if (this.pad < 0) return false
@@ -517,9 +535,9 @@ export class PlayerSession {
   }
 
   /**
-   * Advances blowing on a pad and bouncing (walking round the lobby earns nothing: Breath
-   * comes from the Blow Pads, taps of BLOW and bouncing). Call at a steady rate (the room's
-   * simulation interval).
+   * Advances training and bouncing. Standing still on an unlocked Blow Pad trains a step
+   * every TRAIN_INTERVAL; walking round the lobby (or across a pad) earns nothing, and
+   * tapping BLOW pays on top. Call at a steady rate (the room's simulation interval).
    */
   tick(dt, now) {
     if (now < this.rollingUntil) {
@@ -529,13 +547,14 @@ export class PlayerSession {
         this.rollTimer -= ROLL_TICK
         this.gain('roll', -1, applyRollTick(this.profile, now))
       }
-    } else if (this.pad >= 0 && now >= this.busyUntil && this.onClaimedPad()) {
+    } else if (this.pad >= 0 && now >= this.busyUntil && this.onClaimedPad() && this.isStill(now)) {
       this.trainTimer += dt
       while (this.trainTimer >= TRAIN_INTERVAL) {
         this.trainTimer -= TRAIN_INTERVAL
         this.trainOnce(now)
       }
     } else {
+      this.isStill(now)
       this.trainTimer = Math.min(this.trainTimer, TRAIN_INTERVAL * 0.5)
     }
     this.profile.stats.playtime += dt

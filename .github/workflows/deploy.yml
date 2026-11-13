@@ -1,4 +1,4 @@
-# Ships +1 Bubble Hop to Bloxity Legion: the dev branch to the dev channel, main to prod.
+# Ships +1 Bubble Bounce to Bloxity Legion: the dev branch to the dev channel, main to prod.
 #
 #   server   -> Docker image in this repo's GitHub Container Registry, then Legion rolls
 #               it out (https://1-bubble-bounce.host.bloxity.io / .dev.host.bloxity.io)

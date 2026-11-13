@@ -6,7 +6,7 @@
  * Shared by client (display) and server (authority): both always agree on costs and
  * multipliers because they read the same table.
  *
- * The loop (+1 Bubble Hop): blow bubbles on the Blow Pads (and tap BLOW) for Breath ->
+ * The loop (+1 Bubble Bounce): blow bubbles on the Blow Pads (and tap BLOW) for Breath ->
  * step into the BLOW ZONE, hold BLOW to puff up a giant bubble, let go at its biggest and
  * hop inside -> bounce down the valley through meadows, villages, towns and cities (more
  * Breath bounces you further, every bounce earns more Breath and every metre pays Wins)
@@ -754,7 +754,7 @@ export const QUEST_TYPES = {
  * you have that much); after the last the guide is done.
  */
 export const TUTORIAL = [
-  { text: 'Stand on a Blow Pad to get 30 Breath', event: 'train', target: 'pad0', health: 30 },
+  { text: 'Stand on a Blow Pad (or click to blow bubbles) to get 15 Breath', event: 'train', target: 'pad0', health: 15 },
   { text: 'Go to the BLOW ZONE, hold BLOW, let go at the biggest!', event: 'roll', target: 'roll' },
   { text: 'Buy the Raindrop Bubble with your Wins!', event: 'buyTire', target: 'tires' },
 ]

@@ -5,8 +5,7 @@ import { iconUrl } from './icons'
 import StrokeText from './StrokeText'
 
 const TIPS = [
-  'Stand on a Blow Pad to blow bubbles and gain Breath automatically!',
-  'Tap BLOW for even more Breath - on a Blow Pad every tap counts the pad!',
+  'Stand still on a Blow Pad to blow bubbles and gain Breath - and click (or tap BLOW) for even more!',
   'More Breath = you bounce further, and every metre pays Wins!',
   'Let go of BLOW when the bubble is biggest for a PERFECT launch: x1.5 distance, x1.6 Wins!',
   'Every bounce earns you more Breath on the way!',
@@ -71,11 +70,11 @@ export function LoadingScreen({ done }) {
         <img src={iconUrl('tire')} alt="" width="150" height="150" draggable={false} />
       </div>
 
-      {/* The game's name: +1 ARM over a big rainbow LENGTH, tilted like a sticker. */}
+      {/* The game's name: +1 BUBBLE over a big rainbow BOUNCE, tilted like a sticker. */}
       <h1 className="m-0 flex flex-col items-center text-center leading-none" style={{ transform: 'rotate(-3deg)' }}>
         <span style={{ fontSize: 'clamp(36px, 8vw, 84px)' }}>
           <StrokeText stroke="0.16em" gradient="linear-gradient(180deg, #ffffff 0%, #ffffff 55%, #ffe36b 56%, #ffb21e 100%)">
-            +1 ARM
+            +1 BUBBLE
           </StrokeText>
         </span>
         <span style={{ fontSize: 'clamp(44px, 10vw, 118px)', marginTop: '-0.08em' }}>
@@ -83,7 +82,7 @@ export function LoadingScreen({ done }) {
             stroke="0.15em"
             gradient="linear-gradient(90deg, #ff4a4a 0%, #ff9a1e 18%, #ffe23a 36%, #4be05a 54%, #2fd0ff 72%, #b05cff 90%, #ff5fd2 100%)"
           >
-            LENGTH
+            BOUNCE
           </StrokeText>
         </span>
         <span className="text-base md:text-xl" style={{ marginTop: '0.4em' }}>

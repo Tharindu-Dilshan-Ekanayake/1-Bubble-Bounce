@@ -3,7 +3,7 @@ canDie: false
 hasScore: true
 ---
 
-# +1 Bubble Hop: Boxity integration
+# +1 Bubble Bounce: Boxity integration
 
 The player cannot die: there is no death or game-over screen. You blow bubbles on the
 Blow Pads (and tap BLOW) for Breath, step into the BLOW ZONE, hold BLOW to puff up a giant

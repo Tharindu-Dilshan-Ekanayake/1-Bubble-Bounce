@@ -32,7 +32,7 @@ import {
   applyRebirth,
   applyRoll,
   baseRollWins,
-  applyTrain,
+  applyBlowTap,
   buyHealthPack,
   buyTire,
   createProfile,
@@ -65,7 +65,7 @@ function makeSession(pos, profile = createProfile('a', 'A')) {
 
 /** Trains on pad 0 until max level. */
 function maxOut(p) {
-  for (let i = 0; i < 1e5 && p.level < levelCap(p.rebirths); i += 1) applyTrain(p, 0, 0)
+  for (let i = 0; i < 1e5 && p.level < levelCap(p.rebirths); i += 1) applyBlowTap(p, 0, 0)
 }
 
 // --- Formatting ------------------------------------------------------------------
@@ -96,35 +96,37 @@ test('each level needs more Health than the last', () => {
   assert.equal(levelFor(1e12, 1), 23)
 })
 
-test('the first pad gives the tire power per step and stops at max level', () => {
+test('the first pad gives the bubble power per tap and stops at max level', () => {
   const p = createProfile('a', 'A')
-  for (let i = 0; i < 10; i += 1) applyTrain(p, 0, 0)
+  for (let i = 0; i < 10; i += 1) applyBlowTap(p, 0, 0)
   assert.equal(p.health, 10)
   maxOut(p)
   assert.equal(p.health, healthForLevel(15))
   assert.equal(p.level, 15)
-  assert.equal(applyTrain(p, 0, 0).gain, 0, 'no more natural gains at max level')
+  assert.equal(applyBlowTap(p, 0, 0).gain, 0, 'no more natural gains at max level')
   assert.equal(p.health, healthForLevel(15))
 })
 
-test('locked pads give nothing', () => {
+test('a locked pad pays only the bubble gain and is not remembered for offline progress', () => {
   const p = createProfile('a', 'A')
-  assert.equal(applyTrain(p, 1, 0).ok, false)
-  assert.equal(p.health, 0)
+  assert.equal(applyBlowTap(p, 1, 0).gain, TIRES[0].power)
+  assert.equal(p.lastPad, -1)
+  applyBlowTap(p, 0, 0)
+  assert.equal(p.lastPad, 0)
 })
 
 test('better tires add power, rebirths multiply it', () => {
   const p = createProfile('a', 'A')
   p.ownedTires.push('drop')
   p.equippedTire = 'drop'
-  applyTrain(p, 0, 0)
+  applyBlowTap(p, 0, 0)
   assert.equal(p.health, TIRES[1].power)
   p.rebirths = 1
   p.health = 0
   p.level = 1
-  applyTrain(p, 0, 0)
+  applyBlowTap(p, 0, 0)
   assert.equal(p.health, TIRES[1].power * 2)
-  applyTrain(p, 1, 0)
+  applyBlowTap(p, 1, 0)
   assert.equal(p.health, TIRES[1].power * 2 + TIRES[1].power * 2 * 2, 'Speed Pad is x2 on top')
 })
 
@@ -325,32 +327,45 @@ test('only brand-new players get the tutorial', () => {
 
 // --- The session -----------------------------------------------------------------
 
-test('training only counts on the pad the player really stands on', () => {
+test('standing still on the pad you really stand on trains; walking across a pad does not', () => {
   const pos = { x: SPAWN.x, y: 0, z: SPAWN.z }
   const { session, profile } = makeSession(pos)
   session.handle('enterPad', { pad: 0 }, 0)
-  session.tick(0.1, 0)
-  session.tick(2, 0)
+  for (let i = 0; i < 20; i += 1) session.tick(0.1, i * 100)
   assert.equal(profile.health, 0, 'claimed a pad from spawn')
-  Object.assign(pos, onPad(0))
-  session.tick(0.1, 0)
-  session.tick(2, 0)
-  assert.ok(profile.health > 0)
+  // Walk straight across the pad, a tenth of a metre a tick on: nothing.
+  const start = onPad(0)
+  for (let i = 0; i < 40; i += 1) {
+    Object.assign(pos, { x: start.x - 2 + i * 0.1, y: 0.5, z: start.z })
+    session.tick(0.1, 2000 + i * 100)
+  }
+  assert.equal(profile.health, 0, 'walking over the pad')
+  // Stand still on it: a step every TRAIN_INTERVAL, after a moment of standing.
+  Object.assign(pos, start)
+  for (let i = 0; i < 40; i += 1) session.tick(0.1, 6000 + i * 100)
+  assert.ok(profile.health >= 3, 'four seconds on the pad: ' + profile.health)
   session.handle('enterPad', { pad: 1 }, 0)
   assert.equal(session.pad, 0, 'a locked pad cannot be entered')
 })
 
-test('the first guide step completes on the pad once Health reaches 30', () => {
+test('the first guide step completes by standing on the pad once Breath reaches 15', () => {
   assert.equal(TUTORIAL[0].event, 'train')
-  assert.equal(TUTORIAL[0].health, 30)
+  assert.equal(TUTORIAL[0].health, 15)
   const pos = onPad(0)
   const { session, profile } = makeSession(pos)
   session.handle('enterPad', { pad: 0 }, 0)
   let t = 0
-  while (profile.health < 29) session.tick(0.1, (t += 100))
+  while (profile.health < 14) session.tick(0.1, (t += 100))
   assert.equal(profile.tutorialStep, 0)
-  while (profile.health < 30) session.tick(0.1, (t += 100))
+  while (profile.health < 15) session.tick(0.1, (t += 100))
   assert.equal(profile.tutorialStep, 1)
+})
+
+test('a tap of BLOW on a pad pays on top of the training', () => {
+  const { session, profile } = makeSession(onPad(0))
+  session.handle('enterPad', { pad: 0 }, 0)
+  session.handle('blow', {}, 1000)
+  assert.equal(profile.health, padGain(profile, 0, 1000))
 })
 
 test('rolls start only from the roll zone, one at a time', () => {

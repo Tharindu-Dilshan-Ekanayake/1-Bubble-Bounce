@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 import { rebirthMultiplier, TUTORIAL } from '@shared/balance'
 import { formatDistance, formatNumber } from '@shared/format'
 import { isMaxLevel, nextTire, zoneIndexAt } from '@shared/logic'
@@ -10,6 +12,30 @@ import { u } from './style'
 
 const BANNER_GRADIENT = 'linear-gradient(180deg, #fff6a8 0%, #ffd52a 45%, #ffa000 100%)'
 const PANEL_GRADIENT = 'linear-gradient(180deg, #ffe45c 0%, #ffc21f 55%, #ff9a12 100%)'
+
+/** The goal banner shows this long, then hides for HIDE_MS before it shows again. */
+const SHOW_MS = 5000
+const HIDE_MS = 60000
+
+/**
+ * Whether the goal banner is up: for SHOW_MS, then gone for HIDE_MS, and round again, so
+ * it isn't in the way all the time. A new `key` (the goal changed) shows it afresh.
+ */
+function useGlimpse(key) {
+  const [state, setState] = useState({ key, shown: true })
+  // The goal changed: show the banner again (adjusting state while rendering).
+  if (state.key !== key) setState({ key, shown: true })
+  useEffect(() => {
+    let id = 0
+    const swap = (shown) => {
+      setState((s) => ({ ...s, shown }))
+      id = setTimeout(() => swap(!shown), shown ? SHOW_MS : HIDE_MS)
+    }
+    id = setTimeout(() => swap(false), SHOW_MS)
+    return () => clearTimeout(id)
+  }, [key])
+  return state.key === key ? state.shown : true
+}
 
 /**
  * The tutorial for brand-new players: run, kick, buy a ball - then it's gone for good.
@@ -65,6 +91,8 @@ function GoalBanner() {
   let text
   let progress = null
   let panel = null
+  // What the goal is (not its progress): a new one brings the banner back.
+  let goal = 'rebirth'
   if (isMaxLevel(profile)) {
     text = `REBIRTH READY! Rebirth for x${rebirthMultiplier(profile.rebirths + 1)} Breath`
     panel = 'rebirth'
@@ -74,20 +102,28 @@ function GoalBanner() {
       const wins = Math.max(0, profile.wins - pending)
       text = wins >= next.cost ? `You can buy the ${next.name}! Visit the Bubble Shop` : `Next bubble: ${next.name}`
       progress = Math.min(1, wins / Math.max(1, next.cost))
+      goal = `${next.id}:${wins >= next.cost}`
       if (wins < next.cost) text += ` (${formatNumber(wins)}/${formatNumber(next.cost)} Wins)`
     } else {
       const stages = zones()
       const nextStage = stages[Math.min(stages.length - 1, zoneIndexAt(profile.stats.bestDistance) + 1)]
       text = `Next stage: ${nextStage.name} at ${formatDistance(nextStage.start)} (best ${formatDistance(profile.stats.bestDistance)})`
       progress = Math.min(1, profile.stats.bestDistance / Math.max(1, nextStage.start))
+      goal = `stage:${nextStage.name}`
     }
   }
+  const shown = useGlimpse(goal)
   return (
     <button
       type="button"
       onClick={panel ? () => openPanel(panel) : undefined}
-      className={`${panel ? 'pp-btn pointer-events-auto' : ''} relative flex flex-col items-center overflow-hidden`}
+      tabIndex={shown ? 0 : -1}
+      aria-hidden={!shown}
+      className={`${panel && shown ? 'pp-btn pointer-events-auto' : ''} relative flex flex-col items-center overflow-hidden`}
       style={{
+        opacity: shown ? 1 : 0,
+        transform: shown ? 'translateY(0)' : `translateY(${u(-30)})`,
+        transition: 'opacity 400ms, transform 400ms',
         padding: `${u(6)} ${u(24)} ${u(progress === null ? 6 : 14)}`,
         borderRadius: u(30),
         border: `${u(4)} solid #111`,

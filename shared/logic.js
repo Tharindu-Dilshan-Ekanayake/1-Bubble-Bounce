@@ -292,6 +292,7 @@ function addHealth(profile, gain) {
   return { gain: added, leveledUp: profile.level > before, levels: profile.level - before, maxed: profile.level >= cap }
 }
 
+/** One step of training while you stand still on unlocked pad `index`. */
 export function applyTrain(profile, index, now) {
   if (!isPadUnlocked(profile, index)) return { ok: false, error: 'Pad locked' }
   profile.lastPad = index
@@ -308,7 +309,10 @@ export function applyRollTick(profile, now) {
  * pad `index`, your bubble's own anywhere else (`index` -1).
  */
 export function applyBlowTap(profile, index, now) {
-  const gain = index >= 0 && isPadUnlocked(profile, index) ? padGain(profile, index, now) : baseGain(profile, now)
+  const onPad = index >= 0 && isPadUnlocked(profile, index)
+  // The pad you last blew on is where offline progress carries on.
+  if (onPad) profile.lastPad = index
+  const gain = onPad ? padGain(profile, index, now) : baseGain(profile, now)
   return { ok: true, ...addHealth(profile, gain) }
 }
 

@@ -321,7 +321,7 @@ export function Player({ onAvatarReady }) {
         const puff = Math.floor((motion.stride + Math.PI * 0.6) / (Math.PI * 2))
         const low = !getQuality().particles
         const stream = training && puff !== lastPuff.current ? (low ? 3 : 6) : 0
-        const tapped = taps * (low ? 2 : 3)
+        const tapped = taps * (training ? (low ? 3 : 5) : low ? 2 : 3)
         lastPuff.current = puff
         if (stream + tapped > 0) {
           wand.updateWorldMatrix(true, false)
